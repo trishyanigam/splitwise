@@ -7,6 +7,7 @@ const splitRoutes = require('./splitRoutes.js');
 const settlementRoutes = require('./settlementRoutes.js');
 const balanceRoutes = require('./balanceRoutes.js');
 const debtRoutes = require('./debtRoutes.js');
+const auditRoutes = require('./auditRoutes.js');
 
 const router = Router();
 
@@ -21,6 +22,9 @@ router.use('/groups', balanceRoutes);
 
 // Mount debt routes under /groups
 router.use('/groups', debtRoutes);
+
+// Mount audit routes under /groups
+router.use('/groups', auditRoutes);
 
 // Mount membership routes under /groups/:groupId/members
 router.use('/groups/:groupId/members', memberRoutes);

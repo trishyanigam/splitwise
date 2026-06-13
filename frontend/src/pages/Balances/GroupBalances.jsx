@@ -151,7 +151,8 @@ export const GroupBalances = () => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700, pl: 3 }}>User</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700, pr: 3 }}>Net Balance</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>Net Balance</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, pr: 3 }}>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -222,7 +223,7 @@ export const GroupBalances = () => {
                           )}
                         </TableCell>
                         
-                        <TableCell align="right" sx={{ pr: 3, py: 2 }}>
+                        <TableCell align="right" sx={{ py: 2 }}>
                           <Typography 
                             variant="subtitle2" 
                             sx={{ 
@@ -232,6 +233,17 @@ export const GroupBalances = () => {
                           >
                             {isPositive ? '+' : ''}₹{row.balance.toFixed(2)}
                           </Typography>
+                        </TableCell>
+                        
+                        <TableCell align="center" sx={{ pr: 3, py: 2 }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => navigate(`/groups/${groupId}/audit/${row.userId}`)}
+                            sx={{ fontWeight: 600, textTransform: 'none', py: 0.5 }}
+                          >
+                            View Details
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );

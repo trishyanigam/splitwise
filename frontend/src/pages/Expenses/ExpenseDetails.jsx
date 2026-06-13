@@ -267,6 +267,14 @@ export const ExpenseDetails = () => {
         <Box sx={{ display: 'flex', gap: 1.5 }}>
           <Button
             variant="outlined"
+            color="primary"
+            onClick={() => navigate(`/groups/${groupId}/expenses/${expenseId}/trace`)}
+            sx={{ fontWeight: 600 }}
+          >
+            Audit Split
+          </Button>
+          <Button
+            variant="outlined"
             color="secondary"
             startIcon={<EditIcon />}
             onClick={handleEditClick}

@@ -29,8 +29,31 @@ export const getSimplifiedDebts = async (groupId) => {
   return response.data;
 };
 
+/**
+ * Retrieves the audit trail / balance breakdown for a specific user in a group.
+ * @param {number|string} groupId 
+ * @param {number|string} userId 
+ * @returns {Promise<Object>} The API response data
+ */
+export const getUserBalanceBreakdown = async (groupId, userId) => {
+  const response = await api.get(`/groups/${groupId}/audit/${userId}`);
+  return response.data;
+};
+
+/**
+ * Retrieves trace/split calculations for a specific expense.
+ * @param {number|string} expenseId 
+ * @returns {Promise<Object>} The API response data
+ */
+export const getExpenseTrace = async (expenseId) => {
+  const response = await api.get(`/groups/expenses/${expenseId}/trace`);
+  return response.data;
+};
+
 export default {
   getGroupBalances,
   getUserSummary,
   getSimplifiedDebts,
+  getUserBalanceBreakdown,
+  getExpenseTrace
 };

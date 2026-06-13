@@ -23,6 +23,8 @@ const ExpenseDetails = lazy(() => import('../pages/Expenses/ExpenseDetails.jsx')
 const SettlementsList = lazy(() => import('../pages/Settlements/SettlementsList.jsx'));
 const CreateSettlement = lazy(() => import('../pages/Settlements/CreateSettlement.jsx'));
 const SettlementDetails = lazy(() => import('../pages/Settlements/SettlementDetails.jsx'));
+const BalanceBreakdown = lazy(() => import('../pages/Audit/BalanceBreakdown.jsx'));
+const ExpenseTrace = lazy(() => import('../pages/Audit/ExpenseTrace.jsx'));
 
 // Premium dynamic spinner layout fallback
 const LoadingFallback = () => (
@@ -57,11 +59,13 @@ export const AppRoutes = () => {
             <Route path="/groups/:groupId/members" element={<MembersPage />} />
             <Route path="/groups/:groupId/balances" element={<GroupBalances />} />
             <Route path="/groups/:groupId/simplified-debts" element={<SimplifiedDebts />} />
+            <Route path="/groups/:groupId/audit/:userId" element={<BalanceBreakdown />} />
             
             {/* Expenses Management */}
             <Route path="/groups/:groupId/expenses" element={<ExpensesList />} />
             <Route path="/groups/:groupId/expenses/create" element={<CreateExpense />} />
             <Route path="/groups/:groupId/expenses/:expenseId" element={<ExpenseDetails />} />
+            <Route path="/groups/:groupId/expenses/:expenseId/trace" element={<ExpenseTrace />} />
             
             {/* Settlements Management */}
             <Route path="/groups/:groupId/settlements" element={<SettlementsList />} />

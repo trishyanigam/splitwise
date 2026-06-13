@@ -25,6 +25,8 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import GroupIcon from '@mui/icons-material/Group';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { getUserSummary } from '../../services/balanceService.js';
+import useAuth from '../../hooks/useAuth.js';
+
 
 /**
  * UserBalanceSummary page component renders overall owe/receive metrics
@@ -32,6 +34,7 @@ import { getUserSummary } from '../../services/balanceService.js';
  */
 export const UserBalanceSummary = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [summary, setSummary] = useState({
     totalGroups: 0,
     amountOwed: 0,
@@ -275,15 +278,25 @@ export const UserBalanceSummary = () => {
 
                     {/* Actions cell */}
                     <TableCell align="right" sx={{ pr: 3, py: 2 }}>
-                      <Button
-                        variant="text"
-                        size="small"
-                        startIcon={<OpenInNewIcon fontSize="small" />}
-                        onClick={() => navigate(`/groups/${row.groupId}/balances`)}
-                        sx={{ fontWeight: 600 }}
-                      >
-                        View Ledgers
-                      </Button>
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                        <Button
+                          variant="text"
+                          size="small"
+                          startIcon={<OpenInNewIcon fontSize="small" />}
+                          onClick={() => navigate(`/groups/${row.groupId}/balances`)}
+                          sx={{ fontWeight: 600 }}
+                        >
+                          View Ledgers
+                        </Button>
+                        <Button
+                          variant="text"
+                          size="small"
+                          onClick={() => navigate(`/groups/${row.groupId}/audit/${user?.id}`)}
+                          sx={{ fontWeight: 600 }}
+                        >
+                          View Breakdown
+                        </Button>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 );
