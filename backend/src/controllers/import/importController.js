@@ -1,5 +1,6 @@
 const prisma = require('../../config/prisma.js');
 const csvImportService = require('../../services/import/csvImportService.js');
+const anomalyDetectionService = require('../../services/import/anomalyDetectionService.js');
 const fs = require('fs');
 
 /**
@@ -47,20 +48,39 @@ const uploadCsv = async (req, res, next) => {
     // 3. Store raw records in database staging table
     const summary = await csvImportService.saveImportRecords(session.id, rows);
 
-    // 4. Delete the temp uploaded file now that staging is successfully completed
+    // 4. Run anomaly detection on staged records
+    const anomalySummary = await anomalyDetectionService.detectAnomalies(session.id);
+
+    // 5. Update session status based on anomaly detection results
+    let finalStatus = 'COMPLETED';
+    if (anomalySummary.totalAnomalies > 0) {
+      finalStatus = 'REVIEW_REQUIRED';
+    }
+    await prisma.importSession.update({
+      where: { id: session.id },
+      data: { status: finalStatus }
+    });
+
+    // 6. Delete the temp uploaded file now that staging is successfully completed
     if (fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
 
     return res.status(201).json({
       success: true,
-      message: 'CSV uploaded and staged successfully.',
+      message: anomalySummary.totalAnomalies > 0
+        ? `CSV staged with ${anomalySummary.totalAnomalies} anomaly/anomalies requiring review.`
+        : 'CSV uploaded and staged successfully with no anomalies.',
       session: {
         id: session.id,
         originalFileName: session.originalFileName,
-        status: summary.status,
+        status: finalStatus,
         totalRows: summary.totalRows,
         createdAt: session.createdAt
+      },
+      anomalySummary: {
+        totalAnomalies: anomalySummary.totalAnomalies,
+        recordsWithAnomalies: anomalySummary.recordsWithAnomalies
       }
     });
   } catch (error) {
@@ -168,8 +188,100 @@ const getImportRecords = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller endpoint to retrieve all anomalies for a staging import session.
+ */
+const getSessionAnomalies = async (req, res, next) => {
+  try {
+    const sessionId = parseInt(req.params.sessionId, 10);
+    if (isNaN(sessionId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid sessionId parameter is required.'
+      });
+    }
+
+    // Verify session and authorization
+    const session = await prisma.importSession.findUnique({ where: { id: sessionId } });
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'Import session not found.' });
+    }
+    if (session.uploadedById !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You do not have permission to view anomalies for this session.'
+      });
+    }
+
+    const anomalies = await anomalyDetectionService.getSessionAnomalies(sessionId);
+
+    return res.status(200).json({
+      success: true,
+      sessionId,
+      totalAnomalies: anomalies.length,
+      anomalies
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Controller endpoint to update the status of a single anomaly.
+ * Body: { status: 'APPROVED' | 'REJECTED' | 'FIXED' }
+ */
+const updateAnomalyStatus = async (req, res, next) => {
+  try {
+    const anomalyId = parseInt(req.params.anomalyId, 10);
+    if (isNaN(anomalyId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid anomalyId parameter is required.'
+      });
+    }
+
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request body must include a "status" field.'
+      });
+    }
+
+    // Verify anomaly exists and caller owns the parent session
+    const anomaly = await prisma.importAnomaly.findUnique({
+      where: { id: anomalyId },
+      include: { importSession: { select: { uploadedById: true } } }
+    });
+    if (!anomaly) {
+      return res.status(404).json({ success: false, message: 'Anomaly not found.' });
+    }
+    if (anomaly.importSession.uploadedById !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You do not have permission to update this anomaly.'
+      });
+    }
+
+    const updated = await anomalyDetectionService.updateAnomalyStatus(anomalyId, status);
+
+    return res.status(200).json({
+      success: true,
+      message: `Anomaly status updated to "${status}".`,
+      anomaly: updated
+    });
+  } catch (error) {
+    if (error.message.startsWith('Invalid status')) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
 module.exports = {
   uploadCsv,
   getImportSession,
-  getImportRecords
+  getImportRecords,
+  getSessionAnomalies,
+  updateAnomalyStatus
 };

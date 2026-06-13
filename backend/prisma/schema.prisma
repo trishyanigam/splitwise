@@ -135,6 +135,7 @@ model ImportSession {
   totalRows        Int                 @default(0)
   createdAt        DateTime            @default(now())
   records          ImportRecord[]
+  anomalies        ImportAnomaly[]
 
   @@index([uploadedById])
 }
@@ -146,6 +147,40 @@ model ImportRecord {
   rowNumber       Int
   rawData         Json
   status          ImportRecordStatus @default(PENDING)
+  anomalies       ImportAnomaly[]
 
   @@index([importSessionId])
+}
+
+enum AnomalySeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AnomalyStatus {
+  OPEN
+  APPROVED
+  REJECTED
+  FIXED
+}
+
+model ImportAnomaly {
+  id              Int             @id @default(autoincrement())
+  importSessionId Int
+  importSession   ImportSession   @relation(fields: [importSessionId], references: [id])
+  importRecordId  Int
+  importRecord    ImportRecord    @relation(fields: [importRecordId], references: [id])
+  anomalyType     String          @db.VarChar(100)
+  severity        AnomalySeverity @default(MEDIUM)
+  description     String          @db.VarChar(500)
+  suggestedAction String?         @db.VarChar(500)
+  status          AnomalyStatus   @default(OPEN)
+  createdAt       DateTime        @default(now())
+
+  @@index([importSessionId])
+  @@index([importRecordId])
+  @@index([status])
+  @@index([severity])
 }

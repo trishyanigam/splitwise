@@ -52,10 +52,35 @@ export const getImportRecords = async (sessionId) => {
 export const uploadCsvFile = uploadCsv;
 export const getImportSessionDetails = getImportSession;
 
+/**
+ * Retrieves all anomalies for a given import session.
+ *
+ * @param {number|string} sessionId
+ * @returns {Promise<Object>} Anomaly list and summary (response data only).
+ */
+export const getSessionAnomalies = async (sessionId) => {
+  const response = await api.get(`/import/${sessionId}/anomalies`);
+  return response.data;
+};
+
+/**
+ * Updates the review status of a single anomaly.
+ *
+ * @param {number|string} anomalyId
+ * @param {string} status - 'APPROVED' | 'REJECTED' | 'FIXED'
+ * @returns {Promise<Object>} Updated anomaly record (response data only).
+ */
+export const updateAnomalyStatus = async (anomalyId, status) => {
+  const response = await api.patch(`/import/anomalies/${anomalyId}`, { status });
+  return response.data;
+};
+
 export default {
   uploadCsv,
   getImportSession,
   getImportRecords,
   uploadCsvFile,
-  getImportSessionDetails
+  getImportSessionDetails,
+  getSessionAnomalies,
+  updateAnomalyStatus
 };

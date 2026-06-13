@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { uploadCsv, getImportSession, getImportRecords } = require('../controllers/import/importController.js');
+const { uploadCsv, getImportSession, getImportRecords, getSessionAnomalies, updateAnomalyStatus } = require('../controllers/import/importController.js');
 const { authenticateToken } = require('../middleware/authMiddleware.js');
 const upload = require('../config/upload.js');
 
@@ -13,5 +13,11 @@ router.get('/:sessionId', authenticateToken, getImportSession);
 
 // GET /api/import/:sessionId/records - Retrieves all staged records for a session
 router.get('/:sessionId/records', authenticateToken, getImportRecords);
+
+// GET /api/import/:sessionId/anomalies - Retrieves all anomalies for a session
+router.get('/:sessionId/anomalies', authenticateToken, getSessionAnomalies);
+
+// PATCH /api/import/anomalies/:anomalyId - Updates the review status of an anomaly
+router.patch('/anomalies/:anomalyId', authenticateToken, updateAnomalyStatus);
 
 module.exports = router;

@@ -18,8 +18,10 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { DataGrid } from '@mui/x-data-grid';
 import { getImportSessionDetails, getImportRecords } from '../../services/importService.js';
+import ImportSummary from '../../components/ImportSummary.jsx';
 
 export const ImportPreview = () => {
   const { sessionId } = useParams();
@@ -184,92 +186,54 @@ export const ImportPreview = () => {
       </Box>
 
       {/* Grid of Metrics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* Total Rows Card */}
-        <Grid item xs={12} sm={4}>
-          <Card 
-            elevation={0}
-            sx={{
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px'
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Total CSV Rows
-                </Typography>
-                <ListAltIcon sx={{ color: 'primary.main' }} />
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 800 }}>
-                {session.totalRows}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                Total rows loaded from source file
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Box sx={{ mb: 4 }}>
+        <ImportSummary
+          rowsProcessed={session.totalRows}
+          validRows={records.filter((r) => r.status === 'VALID').length}
+          rowsRequiringReview={records.filter((r) => r.status === 'REVIEW_REQUIRED' || r.status === 'PENDING').length}
+          criticalIssues={records.filter((r) => r.status === 'INVALID').length}
+        />
+      </Box>
 
-        {/* Staged Rows Card */}
-        <Grid item xs={12} sm={4}>
-          <Card 
-            elevation={0}
+      {/* Anomaly Review Banner */}
+      {session.status === 'REVIEW_REQUIRED' && (
+        <Paper
+          elevation={0}
+          sx={{
+            mb: 3,
+            p: 2.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            background: 'linear-gradient(135deg, #422006 0%, #431407 100%)',
+            border: '1px solid #f9731655',
+            borderRadius: '16px'
+          }}
+        >
+          <WarningAmberIcon sx={{ color: '#f97316', fontSize: 32, flexShrink: 0 }} />
+          <Box flex={1}>
+            <Typography variant="subtitle1" fontWeight={700} color="#fed7aa">
+              Anomalies Detected — Review Required
+            </Typography>
+            <Typography variant="body2" color="#fb923c">
+              One or more imported rows have issues that need your attention before this data can be used.
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            onClick={() => navigate(`/import/${sessionId}/anomalies`)}
             sx={{
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px'
+              bgcolor: '#f97316',
+              color: '#fff',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              '&:hover': { bgcolor: '#ea580c' }
             }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Staged Records
-                </Typography>
-                <CheckCircleOutlineIcon sx={{ color: 'success.main' }} />
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 800, color: 'success.main' }}>
-                {records.length}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                Staging records written to database
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Session Status Card */}
-        <Grid item xs={12} sm={4}>
-          <Card 
-            elevation={0}
-            sx={{
-              backgroundColor: 'background.paper',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
-              borderRadius: '16px'
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Staging Session Status
-                </Typography>
-                <SettingsBackupRestoreIcon sx={{ color: 'secondary.main' }} />
-              </Box>
-              <Box sx={{ mt: 1 }}>
-                <Chip 
-                  label={session.status} 
-                  color="secondary" 
-                  sx={{ fontWeight: 800, px: 1 }}
-                />
-              </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
-                Status of the overall csv processing
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            Review Anomalies
+          </Button>
+        </Paper>
+      )}
 
       {/* Material UI Data Grid Section */}
       <Paper

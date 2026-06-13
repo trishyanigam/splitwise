@@ -27,6 +27,7 @@ const BalanceBreakdown = lazy(() => import('../pages/Audit/BalanceBreakdown.jsx'
 const ExpenseTrace = lazy(() => import('../pages/Audit/ExpenseTrace.jsx'));
 const UploadCsv = lazy(() => import('../pages/Import/UploadCsv.jsx'));
 const ImportPreview = lazy(() => import('../pages/Import/ImportPreview.jsx'));
+const AnomalyReview = lazy(() => import('../pages/Import/AnomalyReview.jsx'));
 
 // Premium dynamic spinner layout fallback
 const LoadingFallback = () => (
@@ -78,6 +79,7 @@ export const AppRoutes = () => {
             <Route path="/balances" element={<UserBalanceSummary />} />
             <Route path="/import" element={<UploadCsv />} />
             <Route path="/import/:sessionId" element={<ImportPreview />} />
+            <Route path="/import/:sessionId/anomalies" element={<AnomalyReview />} />
           </Route>
         </Route>
 
