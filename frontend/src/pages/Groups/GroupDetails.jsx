@@ -34,7 +34,7 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import PaymentIcon from '@mui/icons-material/Payment';
 import { toast } from 'react-hot-toast';
-import { getGroupById, updateGroup, deleteGroup } from '../../services/groupService.js';
+import { getGroupById, updateGroup, deleteGroup, getGroupBalances } from '../../services/groupService.js';
 import { getMembers, getMembershipHistory } from '../../services/membershipService.js';
 import { getExpenses } from '../../services/expenseService.js';
 import { getSettlements } from '../../services/settlementService.js';
@@ -72,17 +72,21 @@ export const GroupDetails = () => {
   const [settlements, setSettlements] = useState([]);
   const [settlementsCount, setSettlementsCount] = useState(0);
 
+  // Balances State
+  const [balances, setBalances] = useState([]);
+
   const fetchGroupData = async () => {
     try {
       setLoading(true);
       setError(null);
-      // Parallel requests for Group metadata, active members, logs history, expenses, and settlements
-      const [groupRes, membersRes, historyRes, expensesRes, settlementsRes] = await Promise.all([
+      // Parallel requests for Group metadata, active members, logs history, expenses, settlements, and balances
+      const [groupRes, membersRes, historyRes, expensesRes, settlementsRes, balancesRes] = await Promise.all([
         getGroupById(groupId),
         getMembers(groupId),
         getMembershipHistory(groupId),
         getExpenses(groupId),
-        getSettlements(groupId)
+        getSettlements(groupId),
+        getGroupBalances(groupId)
       ]);
 
       if (groupRes && groupRes.group) {
@@ -107,6 +111,10 @@ export const GroupDetails = () => {
       if (settlementsRes && settlementsRes.settlements) {
         setSettlements(settlementsRes.settlements);
         setSettlementsCount(settlementsRes.settlements.length);
+      }
+
+      if (balancesRes && balancesRes.balances) {
+        setBalances(balancesRes.balances);
       }
     } catch (err) {
       console.error('Failed to fetch group details:', err);
@@ -658,7 +666,7 @@ export const GroupDetails = () => {
               )}
             </Paper>
 
-            {/* Balances Placeholder Section */}
+            {/* Balances Summary Section */}
             <Paper 
               elevation={0}
               sx={{ 
@@ -668,18 +676,101 @@ export const GroupDetails = () => {
                 borderRadius: '16px' 
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                <AccountBalanceIcon sx={{ color: 'primary.main' }} />
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  Balances Summary
-                </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <AccountBalanceIcon sx={{ color: 'primary.main' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    Balances Summary
+                  </Typography>
+                </Box>
+                <Button 
+                  size="small" 
+                  variant="outlined" 
+                  onClick={() => navigate(`/groups/${groupId}/balances`)}
+                  sx={{ 
+                    fontWeight: 600,
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    color: 'text.primary',
+                    '&:hover': {
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                    }
+                  }}
+                >
+                  View Balances
+                </Button>
               </Box>
               <Divider sx={{ mb: 2 }} />
-              <Box sx={{ py: 4, textAlign: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
-                  All balances are settled up!
-                </Typography>
-              </Box>
+              
+              {balances.length === 0 ? (
+                <Box sx={{ py: 3, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No balances tracked in this group.
+                  </Typography>
+                </Box>
+              ) : balances.every(b => b.balance === 0) ? (
+                <Box sx={{ py: 3, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    All balances are settled up!
+                  </Typography>
+                </Box>
+              ) : (
+                <List sx={{ p: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {balances.slice(0, 3).map((memberBal) => {
+                    const isPositive = memberBal.balance > 0;
+                    const isNegative = memberBal.balance < 0;
+                    return (
+                      <ListItem 
+                        key={memberBal.userId} 
+                        sx={{ 
+                          px: 1.5, 
+                          py: 1, 
+                          borderRadius: '8px', 
+                          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                          border: '1px solid rgba(255, 255, 255, 0.03)'
+                        }}
+                      >
+                        <ListItemAvatar>
+                          <Avatar sx={{ bgcolor: isPositive ? 'rgba(16, 185, 129, 0.1)' : isNegative ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.05)', color: isPositive ? '#10b981' : isNegative ? '#ef4444' : 'text.primary', width: 32, height: 32 }}>
+                            {memberBal.userName?.[0]?.toUpperCase() || 'U'}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText 
+                          primary={
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                              {memberBal.userName}
+                            </Typography>
+                          }
+                          secondary={
+                            isPositive ? (
+                              <Typography variant="caption" sx={{ color: '#10b981', fontWeight: 600 }}>
+                                should receive
+                              </Typography>
+                            ) : isNegative ? (
+                              <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600 }}>
+                                owes money
+                              </Typography>
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">
+                                Settled up
+                              </Typography>
+                            )
+                          }
+                        />
+                        <Typography 
+                          variant="subtitle2" 
+                          sx={{ 
+                            fontWeight: 800, 
+                            color: isPositive ? '#10b981' : isNegative ? '#ef4444' : 'text.primary'
+                          }}
+                        >
+                          {isPositive ? '+' : ''}₹{memberBal.balance.toFixed(2)}
+                        </Typography>
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              )}
             </Paper>
 
           </Box>

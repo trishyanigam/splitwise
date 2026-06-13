@@ -65,7 +65,7 @@ export const AppLayout = () => {
   const menuItems = [
     { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon color="primary" /> },
     { text: 'Groups', path: '/groups', icon: <GroupIcon color="primary" /> },
-    { text: 'Balances', path: '/balances', icon: <AccountBalanceWalletIcon color="primary" />, disabled: true },
+    { text: 'Balances', path: '/balances', icon: <AccountBalanceWalletIcon color="primary" /> },
     { text: 'Import CSV', path: '/import-csv', icon: <UploadFileIcon color="primary" />, disabled: true },
   ];
 

@@ -46,10 +46,20 @@ export const deleteGroup = async (id) => {
   return response.data;
 };
 
+/**
+ * Retrieves calculated balances and simplified debt transactions for a group
+ * @param {number|string} groupId 
+ */
+export const getGroupBalances = async (groupId) => {
+  const response = await api.get(`/groups/${groupId}/balances`);
+  return response.data;
+};
+
 export default {
   createGroup,
   getGroups,
   getGroupById,
   updateGroup,
   deleteGroup,
+  getGroupBalances,
 };
