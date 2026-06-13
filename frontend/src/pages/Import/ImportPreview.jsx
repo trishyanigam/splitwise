@@ -12,7 +12,8 @@ import {
   Alert,
   Grid,
   Divider,
-  Chip
+  Chip,
+  Stack
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -216,19 +217,34 @@ export const ImportPreview = () => {
               One or more imported rows have issues that need your attention before this data can be used.
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            onClick={() => navigate(`/import/${sessionId}/anomalies`)}
-            sx={{
-              bgcolor: '#f97316',
-              color: '#fff',
-              fontWeight: 700,
-              whiteSpace: 'nowrap',
-              '&:hover': { bgcolor: '#ea580c' }
-            }}
-          >
-            Review Anomalies
-          </Button>
+          <Stack direction="row" spacing={1.5}>
+            <Button
+              variant="outlined"
+              onClick={() => navigate(`/import/${sessionId}/anomalies`)}
+              sx={{
+                color: '#fed7aa',
+                borderColor: '#f9731688',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                '&:hover': { bgcolor: 'rgba(249,115,22,0.1)', borderColor: '#f97316' }
+              }}
+            >
+              Manual Review
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => navigate(`/import/${sessionId}/resolution-center`)}
+              sx={{
+                bgcolor: '#f97316',
+                color: '#fff',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                '&:hover': { bgcolor: '#ea580c' }
+              }}
+            >
+              Resolution Center
+            </Button>
+          </Stack>
         </Paper>
       )}
 

@@ -146,6 +146,35 @@ export const resolveDuplicate = async ({ originalRecordId, duplicateRecordId, ac
   return response.data;
 };
 
+/**
+ * Applies a resolution strategy to a flagged anomaly.
+ * Route: POST /api/import/anomalies/:id/resolve
+ *
+ * @param {number|string} anomalyId
+ * @param {string} resolutionType
+ * @param {Object} [resolvedValue]
+ * @returns {Promise<Object>} The resolved anomaly (response data only).
+ */
+export const resolveAnomalyStrategy = async (anomalyId, resolutionType, resolvedValue) => {
+  const response = await api.post(`/import/anomalies/${anomalyId}/resolve`, {
+    resolutionType,
+    resolvedValue
+  });
+  return response.data;
+};
+
+/**
+ * Retrieves the full audit log of resolutions applied to an anomaly.
+ * Route: GET /api/import/anomalies/:id/resolutions
+ *
+ * @param {number|string} anomalyId
+ * @returns {Promise<Object>} List of resolution histories (response data only).
+ */
+export const getAnomalyResolutionHistory = async (anomalyId) => {
+  const response = await api.get(`/import/anomalies/${anomalyId}/resolutions`);
+  return response.data;
+};
+
 export default {
   uploadCsv,
   getImportSession,
@@ -158,5 +187,8 @@ export default {
   rejectAnomaly,
   manualFixAnomaly,
   mergeDuplicateAnomaly,
-  resolveDuplicate
+  resolveDuplicate,
+  resolveAnomalyStrategy,
+  getAnomalyResolutionHistory
 };
+
