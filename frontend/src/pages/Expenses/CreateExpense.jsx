@@ -33,6 +33,7 @@ import { toast } from 'react-hot-toast';
 import { getGroupById } from '../../services/groupService.js';
 import { getMembers } from '../../services/membershipService.js';
 import { createExpense } from '../../services/expenseService.js';
+import CurrencySelector from '../../components/CurrencySelector.jsx';
 
 export const CreateExpense = () => {
   const { groupId } = useParams();
@@ -57,6 +58,7 @@ export const CreateExpense = () => {
       description: '',
       amount: '',
       currency: 'USD',
+      exchangeRate: '',
       expenseDate: new Date().toISOString().substring(0, 10),
       paidBy: '',
       splitType: 'EQUAL',
@@ -97,14 +99,39 @@ export const CreateExpense = () => {
 
   useEffect(() => {
     fetchData();
-  }, [groupId]);
+    register('currency', { required: 'Currency is required.' });
+    register('exchangeRate', {
+      validate: (val) => {
+        const currentCurrency = watch('currency');
+        if (currentCurrency !== 'USD') return true;
+        const parsed = parseFloat(val);
+        return (!isNaN(parsed) && parsed > 0) || 'Exchange rate is required for USD.';
+      }
+    });
+  }, [groupId, register]);
 
   // Watch fields for dynamic split calculations
   const watchedSplitType = watch('splitType');
   const watchedAmount = watch('amount');
+  const watchedCurrency = watch('currency');
+  const watchedExchangeRate = watch('exchangeRate');
   const watchedParticipantIds = watch('participantIds') || [];
   const watchedExactShares = watch('exactShares') || {};
   const watchedPercentageShares = watch('percentageShares') || {};
+
+  // Compute live INR preview
+  let inrPreview = null;
+  const numAmount = parseFloat(watchedAmount);
+  if (!isNaN(numAmount) && numAmount > 0) {
+    if (watchedCurrency === 'INR') {
+      inrPreview = numAmount;
+    } else if (watchedCurrency === 'USD') {
+      const numRate = parseFloat(watchedExchangeRate);
+      if (!isNaN(numRate) && numRate > 0) {
+        inrPreview = Math.round(numAmount * numRate * 100) / 100;
+      }
+    }
+  }
 
   // Compute live summation diagnostics
   let sumText = '';
@@ -175,6 +202,7 @@ export const CreateExpense = () => {
       description: data.description.trim() || null,
       amount: amt,
       currency: data.currency,
+      exchangeRate: data.currency === 'USD' ? parseFloat(data.exchangeRate) : 1.0,
       expenseDate: data.expenseDate,
       paidBy: parseInt(data.paidBy, 10),
       splitType,
@@ -281,7 +309,8 @@ export const CreateExpense = () => {
               </Grid>
 
               {/* Amount */}
-              <Grid item xs={12} sm={8}>
+              {/* Amount */}
+              <Grid item xs={12} sm={watchedCurrency === 'USD' ? 4 : 8}>
                 <TextField
                   label="Amount"
                   type="number"
@@ -301,31 +330,46 @@ export const CreateExpense = () => {
                 />
               </Grid>
 
-              {/* Currency Selector */}
-              <Grid item xs={12} sm={4}>
-                <Controller
-                  name="currency"
-                  control={control}
-                  rules={{ required: 'Currency is required.' }}
-                  render={({ field }) => (
-                    <FormControl fullWidth error={!!errors.currency}>
-                      <InputLabel id="currency-label">Currency</InputLabel>
-                      <Select
-                        labelId="currency-label"
-                        label="Currency"
-                        disabled={submitting}
-                        {...field}
-                      >
-                        <MenuItem value="INR">INR (₹)</MenuItem>
-                        <MenuItem value="USD">USD ($)</MenuItem>
-                      </Select>
-                      {errors.currency && (
-                        <FormHelperText>{errors.currency.message}</FormHelperText>
-                      )}
-                    </FormControl>
-                  )}
+              {/* Currency & Exchange Rate Selector */}
+              <Grid item xs={12} sm={watchedCurrency === 'USD' ? 8 : 4}>
+                <CurrencySelector
+                  currency={watchedCurrency}
+                  exchangeRate={watchedExchangeRate}
+                  onChange={({ currency, exchangeRate }) => {
+                    setValue('currency', currency, { shouldValidate: true });
+                    setValue('exchangeRate', exchangeRate, { shouldValidate: true });
+                  }}
+                  errors={{
+                    currency: errors.currency?.message,
+                    exchangeRate: errors.exchangeRate?.message
+                  }}
+                  disabled={submitting}
                 />
               </Grid>
+
+              {/* Live Converted INR Preview */}
+              {inrPreview !== null && (
+                <Grid item xs={12}>
+                  <Box 
+                    sx={{ 
+                      p: 2, 
+                      backgroundColor: 'rgba(16, 185, 129, 0.08)', 
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <Typography variant="body2" color="success.main" sx={{ fontWeight: 600 }}>
+                      Live Converted INR Preview
+                    </Typography>
+                    <Typography variant="h6" color="success.main" sx={{ fontWeight: 800 }}>
+                      ₹{inrPreview.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
 
               {/* Expense Date */}
               <Grid item xs={12} sm={6}>

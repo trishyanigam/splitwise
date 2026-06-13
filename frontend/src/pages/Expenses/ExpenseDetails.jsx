@@ -306,23 +306,59 @@ export const ExpenseDetails = () => {
               <Divider sx={{ my: 3 }} />
               
               <Grid container spacing={3}>
-                {/* Amount */}
-                <Grid item xs={6}>
+                {/* Original Amount */}
+                <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <AccountBalanceWalletIcon color="primary" />
                     <Box>
                       <Typography variant="caption" color="text.secondary" display="block">
-                        Total Amount
+                        Original Amount
                       </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800 }}>
                         {formatCurrencyAmount(expense.amount, expense.currency)}
                       </Typography>
                     </Box>
                   </Box>
                 </Grid>
 
+                {/* Converted INR Amount */}
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <AccountBalanceWalletIcon sx={{ color: 'success.main' }} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Converted INR Amount
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: 'success.main' }}>
+                        ₹{expense.convertedAmount !== null && expense.convertedAmount !== undefined
+                          ? Number(expense.convertedAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                          : Number(expense.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        }
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                {/* Exchange Rate */}
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <InfoIcon color="primary" />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Exchange Rate
+                      </Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        {expense.exchangeRate !== null && expense.exchangeRate !== undefined
+                          ? `1 ${expense.currency} = ${Number(expense.exchangeRate).toFixed(4)} INR`
+                          : `1 ${expense.currency} = 1.0000 INR`
+                        }
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
                 {/* Expense Date */}
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <CalendarTodayIcon color="primary" />
                     <Box>

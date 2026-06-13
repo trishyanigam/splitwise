@@ -196,23 +196,59 @@ export const SettlementDetails = () => {
               <Divider sx={{ my: 3 }} />
               
               <Grid container spacing={3}>
-                {/* Amount */}
-                <Grid item xs={6}>
+                {/* Original Amount */}
+                <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <AccountBalanceWalletIcon color="primary" />
                     <Box>
                       <Typography variant="caption" color="text.secondary" display="block">
-                        Amount Settled
+                        Original Amount
                       </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800 }}>
                         {formatCurrencyAmount(settlement.amount, settlement.currency)}
                       </Typography>
                     </Box>
                   </Box>
                 </Grid>
 
+                {/* Converted INR Amount */}
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <AccountBalanceWalletIcon sx={{ color: 'success.main' }} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Converted INR Amount
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: 'success.main' }}>
+                        ₹{settlement.convertedAmount !== null && settlement.convertedAmount !== undefined
+                          ? Number(settlement.convertedAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                          : Number(settlement.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        }
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
+                {/* Exchange Rate */}
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <InfoIcon color="primary" />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Exchange Rate
+                      </Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        {settlement.exchangeRate !== null && settlement.exchangeRate !== undefined
+                          ? `1 ${settlement.currency} = ${Number(settlement.exchangeRate).toFixed(4)} INR`
+                          : `1 ${settlement.currency} = 1.0000 INR`
+                        }
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+
                 {/* Settlement Date */}
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <CalendarTodayIcon color="primary" />
                     <Box>
