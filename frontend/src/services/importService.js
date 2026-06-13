@@ -75,6 +75,77 @@ export const updateAnomalyStatus = async (anomalyId, status) => {
   return response.data;
 };
 
+/**
+ * Approves an anomaly via the review service.
+ * 
+ * @param {number|string} anomalyId
+ * @param {string} [notes]
+ * @returns {Promise<Object>} Result details (response data only).
+ */
+export const approveAnomaly = async (anomalyId, notes) => {
+  const response = await api.post(`/review/anomalies/${anomalyId}/approve`, { notes });
+  return response.data;
+};
+
+/**
+ * Rejects an anomaly via the review service.
+ * 
+ * @param {number|string} anomalyId
+ * @param {string} [notes]
+ * @returns {Promise<Object>} Result details (response data only).
+ */
+export const rejectAnomaly = async (anomalyId, notes) => {
+  const response = await api.post(`/review/anomalies/${anomalyId}/reject`, { notes });
+  return response.data;
+};
+
+/**
+ * Applies a manual fix to an anomaly's parent record.
+ * 
+ * @param {number|string} anomalyId
+ * @param {Object} fixedData  - Field corrections e.g. { amount: '150', date: '2026-06-12' }
+ * @param {string} [notes]
+ * @returns {Promise<Object>} Result details (response data only).
+ */
+export const manualFixAnomaly = async (anomalyId, fixedData, notes) => {
+  const response = await api.post(`/review/anomalies/${anomalyId}/manual-fix`, { fixedData, notes });
+  return response.data;
+};
+
+/**
+ * Merges a duplicate anomaly into a target record.
+ * 
+ * @param {number|string} anomalyId
+ * @param {number|string} targetRecordId
+ * @param {string} [notes]
+ * @returns {Promise<Object>} Result details (response data only).
+ */
+export const mergeDuplicateAnomaly = async (anomalyId, targetRecordId, notes) => {
+  const response = await api.post(`/review/anomalies/${anomalyId}/merge`, { targetRecordId, notes });
+  return response.data;
+};
+
+/**
+ * Resolves a duplicate record pair using a chosen strategy.
+ * Calls the backend duplicateMergeService via the review controller.
+ *
+ * @param {Object} options
+ * @param {number|string} options.originalRecordId
+ * @param {number|string} options.duplicateRecordId
+ * @param {string}        options.action  - KEEP_ORIGINAL | KEEP_DUPLICATE | MERGE | SKIP
+ * @param {string}        [options.notes]
+ * @returns {Promise<Object>} Result details (response data only).
+ */
+export const resolveDuplicate = async ({ originalRecordId, duplicateRecordId, action, notes }) => {
+  const response = await api.post('/review/duplicates/resolve', {
+    originalRecordId,
+    duplicateRecordId,
+    action,
+    notes
+  });
+  return response.data;
+};
+
 export default {
   uploadCsv,
   getImportSession,
@@ -82,5 +153,10 @@ export default {
   uploadCsvFile,
   getImportSessionDetails,
   getSessionAnomalies,
-  updateAnomalyStatus
+  updateAnomalyStatus,
+  approveAnomaly,
+  rejectAnomaly,
+  manualFixAnomaly,
+  mergeDuplicateAnomaly,
+  resolveDuplicate
 };

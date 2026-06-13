@@ -24,7 +24,8 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ErrorIcon from '@mui/icons-material/Error';
+const ErrorOutlineIcon = ErrorIcon;
 import SettingsEthernetIcon from '@mui/icons-material/SettingsEthernet';
 import FunctionsIcon from '@mui/icons-material/Functions';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';

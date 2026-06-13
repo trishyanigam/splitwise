@@ -20,6 +20,7 @@ model User {
   paidSettlements       Settlement[]         @relation("PaidSettlements")
   receivedSettlements   Settlement[]         @relation("ReceivedSettlements")
   uploadedSessions      ImportSession[]      @relation("UploadedSessions")
+  reviewedAnomalies     ImportAnomaly[]      @relation("ReviewedAnomalies")
 }
 
 model Group {
@@ -177,10 +178,25 @@ model ImportAnomaly {
   description     String          @db.VarChar(500)
   suggestedAction String?         @db.VarChar(500)
   status          AnomalyStatus   @default(OPEN)
+  reviewDecision  AnomalyDecision @default(PENDING)
+  reviewedById    Int?
+  reviewedBy      User?           @relation("ReviewedAnomalies", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?
+  resolutionNotes String?         @db.VarChar(500)
   createdAt       DateTime        @default(now())
 
   @@index([importSessionId])
   @@index([importRecordId])
   @@index([status])
   @@index([severity])
+  @@index([reviewDecision])
+  @@index([reviewedById])
+}
+
+enum AnomalyDecision {
+  PENDING
+  APPROVED
+  REJECTED
+  MANUAL_FIX
+  MERGED
 }

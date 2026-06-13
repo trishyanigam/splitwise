@@ -15,9 +15,6 @@ import {
   Chip
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { DataGrid } from '@mui/x-data-grid';
 import { getImportSessionDetails, getImportRecords } from '../../services/importService.js';

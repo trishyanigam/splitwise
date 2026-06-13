@@ -28,6 +28,8 @@ const ExpenseTrace = lazy(() => import('../pages/Audit/ExpenseTrace.jsx'));
 const UploadCsv = lazy(() => import('../pages/Import/UploadCsv.jsx'));
 const ImportPreview = lazy(() => import('../pages/Import/ImportPreview.jsx'));
 const AnomalyReview = lazy(() => import('../pages/Import/AnomalyReview.jsx'));
+const DuplicateReview = lazy(() => import('../pages/Import/DuplicateReview.jsx'));
+const ManualFix = lazy(() => import('../pages/Import/ManualFix.jsx'));
 
 // Premium dynamic spinner layout fallback
 const LoadingFallback = () => (
@@ -80,6 +82,8 @@ export const AppRoutes = () => {
             <Route path="/import" element={<UploadCsv />} />
             <Route path="/import/:sessionId" element={<ImportPreview />} />
             <Route path="/import/:sessionId/anomalies" element={<AnomalyReview />} />
+            <Route path="/import/:sessionId/anomalies/:anomalyId/fix" element={<ManualFix />} />
+            <Route path="/import/:sessionId/duplicates" element={<DuplicateReview />} />
           </Route>
         </Route>
 
