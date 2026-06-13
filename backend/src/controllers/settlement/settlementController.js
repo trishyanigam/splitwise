@@ -1,4 +1,5 @@
 const prisma = require('../../config/prisma.js');
+const { convertToINR } = require('../../services/currency/currencyService.js');
 
 /**
  * Creates a new settlement record in a group.
@@ -8,7 +9,7 @@ const prisma = require('../../config/prisma.js');
 const createSettlement = async (req, res, next) => {
   try {
     const groupId = parseInt(req.params.groupId || req.body.groupId, 10);
-    const { payerId, receiverId, amount, currency, settlementDate, notes } = req.body;
+    const { payerId, receiverId, amount, currency, exchangeRate, settlementDate, notes } = req.body;
 
     if (isNaN(groupId)) {
       return res.status(400).json({
@@ -84,6 +85,19 @@ const createSettlement = async (req, res, next) => {
       });
     }
 
+    // Perform currency conversion to INR
+    let conversionResult;
+    try {
+      conversionResult = convertToINR(parsedAmount, currency, exchangeRate);
+    } catch (conversionError) {
+      return res.status(400).json({
+        success: false,
+        message: conversionError.message,
+      });
+    }
+
+    const { convertedAmount, exchangeRate: finalExchangeRate } = conversionResult;
+
     // Insert settlement record
     const settlement = await prisma.settlement.create({
       data: {
@@ -92,6 +106,8 @@ const createSettlement = async (req, res, next) => {
         receiverId: receiverUserId,
         amount: parsedAmount,
         currency,
+        exchangeRate: finalExchangeRate,
+        convertedAmount,
         settlementDate: settlementDate ? new Date(settlementDate) : new Date(),
         notes: notes || null
       },

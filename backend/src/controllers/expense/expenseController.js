@@ -4,6 +4,7 @@ const {
   calculateExactSplit,
   calculatePercentageSplit
 } = require('../../services/split/splitService.js');
+const { convertToINR } = require('../../services/currency/currencyService.js');
 
 /**
  * Creates a new expense in a group.
@@ -19,6 +20,7 @@ const createExpense = async (req, res, next) => {
       description, 
       amount, 
       currency, 
+      exchangeRate,
       expenseDate, 
       paidBy, 
       splitType = 'EQUAL', 
@@ -144,6 +146,19 @@ const createExpense = async (req, res, next) => {
       });
     }
 
+    // Perform currency conversion to INR
+    let conversionResult;
+    try {
+      conversionResult = convertToINR(parsedAmount, currency, exchangeRate);
+    } catch (conversionError) {
+      return res.status(400).json({
+        success: false,
+        message: conversionError.message,
+      });
+    }
+
+    const { convertedAmount, exchangeRate: finalExchangeRate } = conversionResult;
+
     // Create the expense record and corresponding participant share allocations inside database
     const expense = await prisma.expense.create({
       data: {
@@ -152,6 +167,8 @@ const createExpense = async (req, res, next) => {
         description,
         amount: parsedAmount,
         currency,
+        exchangeRate: finalExchangeRate,
+        convertedAmount,
         expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
         paidById,
         splitType,
