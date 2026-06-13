@@ -21,7 +21,9 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  Paper
+  Paper,
+  Tabs,
+  Tab
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -32,6 +34,9 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { toast } from 'react-hot-toast';
 import { getGroupById, updateGroup, deleteGroup } from '../../services/groupService.js';
+import { getMembers, getMembershipHistory } from '../../services/membershipService.js';
+import { AddMemberDialog } from '../../components/AddMemberDialog.jsx';
+import { MembershipHistory } from '../../components/MembershipHistory.jsx';
 
 export const GroupDetails = () => {
   const { groupId } = useParams();
@@ -50,15 +55,35 @@ export const GroupDetails = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const fetchGroupDetails = async () => {
+  // Members List & History States
+  const [activeMembers, setActiveMembers] = useState([]);
+  const [historyData, setHistoryData] = useState([]);
+  const [activeTab, setActiveTab] = useState(0); // 0 = Active Members, 1 = History
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
+
+  const fetchGroupData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getGroupById(groupId);
-      if (data && data.group) {
-        setGroup(data.group);
+      // Parallel requests for Group metadata, active members, and logs history
+      const [groupRes, membersRes, historyRes] = await Promise.all([
+        getGroupById(groupId),
+        getMembers(groupId),
+        getMembershipHistory(groupId)
+      ]);
+
+      if (groupRes && groupRes.group) {
+        setGroup(groupRes.group);
       } else {
         setError('Group details could not be found.');
+      }
+
+      if (membersRes && membersRes.members) {
+        setActiveMembers(membersRes.members);
+      }
+
+      if (historyRes && historyRes.history) {
+        setHistoryData(historyRes.history);
       }
     } catch (err) {
       console.error('Failed to fetch group details:', err);
@@ -69,7 +94,7 @@ export const GroupDetails = () => {
   };
 
   useEffect(() => {
-    fetchGroupDetails();
+    fetchGroupData();
   }, [groupId]);
 
   // Handle Edit Action
@@ -275,7 +300,7 @@ export const GroupDetails = () => {
         <Grid item xs={12} md={8}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             
-            {/* Members Placeholder Section */}
+            {/* Members Section */}
             <Paper 
               elevation={0}
               sx={{ 
@@ -285,40 +310,122 @@ export const GroupDetails = () => {
                 borderRadius: '16px' 
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <GroupIcon sx={{ color: 'primary.main' }} />
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>
                     Members
                   </Typography>
                 </Box>
-                <Button size="small" variant="text" color="primary" disabled sx={{ fontWeight: 600 }}>
-                  + Add Member
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button 
+                    size="small" 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={() => setAddMemberOpen(true)}
+                    sx={{ fontWeight: 600 }}
+                  >
+                    Add Member
+                  </Button>
+                  <Button 
+                    size="small" 
+                    variant="outlined" 
+                    onClick={() => navigate(`/groups/${groupId}/members`)}
+                    sx={{ 
+                      fontWeight: 600,
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      color: 'text.primary',
+                      '&:hover': {
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                      }
+                    }}
+                  >
+                    Manage
+                  </Button>
+                </Box>
               </Box>
-              <Divider sx={{ mb: 2 }} />
               
-              <List sx={{ p: 0 }}>
-                {/* Always include owner as a member */}
-                <ListItem sx={{ px: 0, py: 1 }}>
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', width: 36, height: 36 }}>
-                      {group.owner?.name?.[0]?.toUpperCase() || 'U'}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText 
-                    primary={group.owner?.name || 'Owner'} 
-                    secondary="Group Owner" 
-                    primaryTypographyProps={{ sx: { fontWeight: 600 } }}
-                  />
-                </ListItem>
-              </List>
+              <Tabs 
+                value={activeTab} 
+                onChange={(e, val) => setActiveTab(val)}
+                sx={{ 
+                  mb: 2, 
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  '& .MuiTab-root': {
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
+                    '&.Mui-selected': {
+                      color: 'primary.main'
+                    }
+                  }
+                }}
+              >
+                <Tab label={`Active Members (${activeMembers.length})`} />
+                <Tab label={`Membership History (${historyData.length})`} />
+              </Tabs>
               
-              <Box sx={{ mt: 2, p: 2.5, border: '1px dashed rgba(255, 255, 255, 0.08)', borderRadius: '10px', textAlign: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
-                  No other members in this group yet. Add friends to start splitting bills!
-                </Typography>
-              </Box>
+              {activeTab === 0 ? (
+                <Box>
+                  <List sx={{ p: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {/* Render active members */}
+                    {activeMembers.length === 0 ? (
+                      <Box sx={{ py: 3, textAlign: 'center', border: '1px dashed rgba(255, 255, 255, 0.08)', borderRadius: '8px' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          No active members in this group yet.
+                        </Typography>
+                      </Box>
+                    ) : (
+                      activeMembers.map((member) => {
+                        const isOwner = member.userId === group.ownerId;
+                        return (
+                          <ListItem 
+                            key={member.id} 
+                            sx={{ 
+                              px: 1.5, 
+                              py: 1, 
+                              borderRadius: '8px', 
+                              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                              border: '1px solid rgba(255, 255, 255, 0.03)'
+                            }}
+                          >
+                            <ListItemAvatar>
+                              <Avatar sx={{ bgcolor: isOwner ? 'primary.main' : 'rgba(255, 255, 255, 0.05)', color: isOwner ? 'primary.contrastText' : 'text.primary', width: 32, height: 32 }}>
+                                {member.user?.name?.[0]?.toUpperCase() || 'U'}
+                              </Avatar>
+                            </ListItemAvatar>
+                            <ListItemText 
+                              primary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                    {member.user?.name}
+                                  </Typography>
+                                  {isOwner && (
+                                    <Box component="span" sx={{ fontSize: '9px', color: 'primary.main', bgcolor: 'rgba(16, 185, 129, 0.1)', px: 0.8, py: 0.2, borderRadius: '4px', fontWeight: 800 }}>
+                                      OWNER
+                                    </Box>
+                                  )}
+                                </Box>
+                              }
+                              secondary={member.user?.email} 
+                              primaryTypographyProps={{ sx: { fontWeight: 600 } }}
+                            />
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                              Joined {new Date(member.joinedAt).toLocaleDateString()}
+                            </Typography>
+                          </ListItem>
+                        );
+                      })
+                    )}
+                  </List>
+                </Box>
+              ) : (
+                <Box>
+                  <MembershipHistory data={historyData} />
+                </Box>
+              )}
             </Paper>
 
             {/* Expenses Placeholder Section */}
@@ -488,6 +595,14 @@ export const GroupDetails = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Reusable Add Member Dialog */}
+      <AddMemberDialog 
+        open={addMemberOpen}
+        onClose={() => setAddMemberOpen(false)}
+        groupId={groupId}
+        onSuccess={fetchGroupData}
+      />
     </Box>
   );
 };

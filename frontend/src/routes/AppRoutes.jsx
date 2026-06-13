@@ -13,6 +13,7 @@ const Dashboard = lazy(() => import('../pages/Dashboard/Dashboard.jsx'));
 const GroupsList = lazy(() => import('../pages/Groups/GroupsList.jsx'));
 const CreateGroup = lazy(() => import('../pages/Groups/CreateGroup.jsx'));
 const GroupDetails = lazy(() => import('../pages/Groups/GroupDetails.jsx'));
+const MembersPage = lazy(() => import('../pages/Groups/MembersPage.jsx'));
 
 // Premium dynamic spinner layout fallback
 const LoadingFallback = () => (
@@ -42,6 +43,7 @@ export const AppRoutes = () => {
             <Route path="/groups" element={<GroupsList />} />
             <Route path="/groups/create" element={<CreateGroup />} />
             <Route path="/groups/:groupId" element={<GroupDetails />} />
+            <Route path="/groups/:groupId/members" element={<MembersPage />} />
           </Route>
         </Route>
 
