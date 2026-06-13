@@ -1,14 +1,30 @@
 const prisma = require('../../config/prisma.js');
+const {
+  calculateEqualSplit,
+  calculateExactSplit,
+  calculatePercentageSplit
+} = require('../../services/split/splitService.js');
 
 /**
  * Creates a new expense in a group.
  * Expects: req.params.groupId (or req.body.groupId), req.body.title, req.body.description,
- *          req.body.amount, req.body.currency, req.body.expenseDate, req.body.paidBy, req.body.participantIds
+ *          req.body.amount, req.body.currency, req.body.expenseDate, req.body.paidBy,
+ *          req.body.splitType, req.body.participants (or legacy participantIds)
  */
 const createExpense = async (req, res, next) => {
   try {
     const groupId = parseInt(req.params.groupId || req.body.groupId, 10);
-    const { title, description, amount, currency, expenseDate, paidBy, participantIds } = req.body;
+    const { 
+      title, 
+      description, 
+      amount, 
+      currency, 
+      expenseDate, 
+      paidBy, 
+      splitType = 'EQUAL', 
+      participants,
+      participantIds 
+    } = req.body;
 
     if (isNaN(groupId)) {
       return res.status(400).json({
@@ -62,35 +78,73 @@ const createExpense = async (req, res, next) => {
       });
     }
 
-    // Validate participantIds array
-    if (!Array.isArray(participantIds) || participantIds.length === 0) {
+    // Resolve participants (supports legacy participantIds array)
+    const targetParticipants = participants || participantIds;
+    if (!Array.isArray(targetParticipants) || targetParticipants.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'participantIds must be a non-empty array of user IDs.',
-      });
-    }
-    
-    const uniqueParticipantIds = [...new Set(participantIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id)))];
-    if (uniqueParticipantIds.length !== participantIds.length) {
-      return res.status(400).json({
-        success: false,
-        message: 'participantIds must contain valid numbers.',
+        message: 'participants must be a non-empty array.',
       });
     }
 
-    // Verify participant users exist
+    // Extract unique user IDs for verification
+    const uniqueUserIds = [...new Set(targetParticipants.map(p => {
+      if (typeof p === 'object' && p !== null) {
+        return parseInt(p.userId, 10);
+      }
+      return parseInt(p, 10);
+    }).filter(id => !isNaN(id)))];
+
+    if (uniqueUserIds.length === 0 || uniqueUserIds.length !== targetParticipants.length) {
+      return res.status(400).json({
+        success: false,
+        message: 'participants must contain unique and valid user IDs.',
+      });
+    }
+
+    // Verify all participant users exist
     const existingParticipants = await prisma.user.findMany({
-      where: { id: { in: uniqueParticipantIds } },
+      where: { id: { in: uniqueUserIds } },
       select: { id: true }
     });
-    if (existingParticipants.length !== uniqueParticipantIds.length) {
+    if (existingParticipants.length !== uniqueUserIds.length) {
       return res.status(404).json({
         success: false,
         message: 'One or more participant users not found.',
       });
     }
 
-    // Create the expense and its participants link rows
+    // Execute split calculations and allocations based on type
+    let calculatedShares = [];
+    try {
+      if (splitType === 'EQUAL') {
+        calculatedShares = calculateEqualSplit(parsedAmount, uniqueUserIds);
+      } else if (splitType === 'EXACT') {
+        const shares = targetParticipants.map(p => ({
+          userId: parseInt(p.userId, 10),
+          shareAmount: parseFloat(p.shareAmount !== undefined ? p.shareAmount : p.amount)
+        }));
+        calculatedShares = calculateExactSplit(parsedAmount, shares);
+      } else if (splitType === 'PERCENTAGE') {
+        const percentages = targetParticipants.map(p => ({
+          userId: parseInt(p.userId, 10),
+          percentage: parseFloat(p.percentage)
+        }));
+        calculatedShares = calculatePercentageSplit(parsedAmount, percentages);
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid splitType. Supported values are EQUAL, EXACT, or PERCENTAGE.',
+        });
+      }
+    } catch (splitError) {
+      return res.status(400).json({
+        success: false,
+        message: splitError.message,
+      });
+    }
+
+    // Create the expense record and corresponding participant share allocations inside database
     const expense = await prisma.expense.create({
       data: {
         groupId,
@@ -100,8 +154,13 @@ const createExpense = async (req, res, next) => {
         currency,
         expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
         paidById,
+        splitType,
         participants: {
-          create: uniqueParticipantIds.map(userId => ({ userId }))
+          create: calculatedShares.map(share => ({
+            userId: share.userId,
+            shareAmount: share.shareAmount,
+            sharePercentage: share.sharePercentage !== undefined ? share.sharePercentage : null
+          }))
         }
       },
       include: {
@@ -126,6 +185,7 @@ const createExpense = async (req, res, next) => {
     next(error);
   }
 };
+
 
 /**
  * Retrieves all expenses inside a group.

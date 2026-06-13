@@ -3,6 +3,7 @@ const authRoutes = require('./authRoutes.js');
 const groupRoutes = require('./groupRoutes.js');
 const memberRoutes = require('./memberRoutes.js');
 const expenseRoutes = require('./expenseRoutes.js');
+const splitRoutes = require('./splitRoutes.js');
 
 const router = Router();
 
@@ -17,5 +18,8 @@ router.use('/groups/:groupId/members', memberRoutes);
 
 // Mount expense routes under /groups/:groupId/expenses
 router.use('/groups/:groupId/expenses', expenseRoutes);
+
+// Mount split calculation routes under /splits
+router.use('/splits', splitRoutes);
 
 module.exports = router;

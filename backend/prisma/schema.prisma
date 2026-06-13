@@ -44,6 +44,12 @@ model GroupMember {
   @@index([userId])
 }
 
+enum SplitType {
+  EQUAL
+  EXACT
+  PERCENTAGE
+}
+
 model Expense {
   id           Int                  @id @default(autoincrement())
   groupId      Int
@@ -55,6 +61,7 @@ model Expense {
   expenseDate  DateTime
   paidById     Int
   paidBy       User                 @relation(fields: [paidById], references: [id], onDelete: Cascade)
+  splitType    SplitType            @default(EQUAL)
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
   participants ExpenseParticipant[]
@@ -64,11 +71,13 @@ model Expense {
 }
 
 model ExpenseParticipant {
-  id        Int     @id @default(autoincrement())
-  expenseId Int
-  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  userId    Int
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              Int      @id @default(autoincrement())
+  expenseId       Int
+  expense         Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shareAmount     Decimal? @db.Decimal(10, 2)
+  sharePercentage Decimal? @db.Decimal(5, 2)
 
   @@unique([expenseId, userId])
   @@index([expenseId])
