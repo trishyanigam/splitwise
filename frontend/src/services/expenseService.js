@@ -3,7 +3,7 @@ import api from './api.js';
 /**
  * Creates a new expense in a group.
  * @param {string|number} groupId - The ID of the group
- * @param {Object} data - The expense data (title, description, amount, currency, expenseDate, paidBy, participantIds)
+ * @param {Object} data - The expense data (title, description, amount, currency, expenseDate, paidBy, splitType, participants)
  * @returns {Promise<Object>} The response data from the API
  */
 export const createExpense = async (groupId, data) => {
@@ -55,10 +55,21 @@ export const deleteExpense = async (groupId, expenseId) => {
   return response.data;
 };
 
+/**
+ * Previews the split calculations before saving.
+ * @param {Object} data - Preview payload ({ amount, splitType, participants })
+ * @returns {Promise<Object>} The calculated shares preview data
+ */
+export const previewSplit = async (data) => {
+  const response = await api.post('/splits/preview', data);
+  return response.data;
+};
+
 export default {
   createExpense,
   getExpenses,
   getExpenseById,
   updateExpense,
   deleteExpense,
+  previewSplit,
 };

@@ -25,7 +25,13 @@ import {
   Checkbox,
   ListItemText,
   OutlinedInput,
-  Paper
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -377,30 +383,83 @@ export const ExpenseDetails = () => {
             {/* Split Participants Card */}
             <Card sx={{ border: '1px solid rgba(255, 255, 255, 0.05)' }}>
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 700, mb: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Split Between ({expense.participants?.length || 0})
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-                  {expense.participants?.map((participant) => (
-                    <Chip 
-                      key={participant.id} 
-                      avatar={
-                        <Avatar sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
-                          {participant.user?.name?.[0]?.toUpperCase() || 'U'}
-                        </Avatar>
-                      }
-                      label={participant.user?.name}
-                      variant="outlined"
-                      sx={{ 
-                        py: 2, 
-                        px: 0.5,
-                        backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                        borderColor: 'rgba(255, 255, 255, 0.08)',
-                        fontWeight: 600
-                      }}
-                    />
-                  ))}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Split Details
+                  </Typography>
+                  <Chip 
+                    label={`Split Type: ${expense.splitType || 'EQUAL'}`} 
+                    size="small" 
+                    color="secondary"
+                    variant="outlined"
+                    sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '10px' }}
+                  />
                 </Box>
+                
+                <TableContainer 
+                  component={Paper} 
+                  variant="outlined" 
+                  sx={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.01)', 
+                    borderColor: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '12px'
+                  }}
+                >
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ '& th': { backgroundColor: 'background.paper', fontWeight: 700 } }}>
+                        <TableCell>Participant</TableCell>
+                        <TableCell align="right">Share Amount</TableCell>
+                        <TableCell align="right">Percentage</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {expense.participants?.map((participant) => {
+                        const shareAmt = participant.shareAmount !== null && participant.shareAmount !== undefined
+                          ? Number(participant.shareAmount)
+                          : Number(expense.amount) / (expense.participants.length || 1);
+
+                        const pct = participant.sharePercentage !== null && participant.sharePercentage !== undefined
+                          ? `${Number(participant.sharePercentage).toFixed(1)}%`
+                          : expense.amount > 0 
+                            ? `${((shareAmt / Number(expense.amount)) * 100).toFixed(1)}%` 
+                            : '-';
+
+                        return (
+                          <TableRow 
+                            key={participant.id}
+                            sx={{ 
+                              '&:last-child td, &:last-child th': { border: 0 },
+                              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.01)' }
+                            }}
+                          >
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.5 }}>
+                                <Avatar sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', width: 28, height: 28, fontSize: '0.75rem' }}>
+                                  {participant.user?.name?.[0]?.toUpperCase() || 'U'}
+                                </Avatar>
+                                <Box>
+                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {participant.user?.name}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '9px' }}>
+                                    {participant.user?.email}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                              {formatCurrencyAmount(shareAmt, expense.currency)}
+                            </TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 500, color: 'text.secondary' }}>
+                              {pct}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </CardContent>
             </Card>
           </Box>

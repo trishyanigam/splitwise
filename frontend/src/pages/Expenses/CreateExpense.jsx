@@ -21,7 +21,12 @@ import {
   Chip, 
   FormHelperText,
   Grid,
-  Paper
+  Paper,
+  Avatar,
+  Divider,
+  List,
+  ListItem,
+  ListItemAvatar
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { toast } from 'react-hot-toast';
@@ -54,7 +59,10 @@ export const CreateExpense = () => {
       currency: 'USD',
       expenseDate: new Date().toISOString().substring(0, 10),
       paidBy: '',
-      participantIds: []
+      splitType: 'EQUAL',
+      participantIds: [],
+      exactShares: {},
+      percentageShares: {}
     }
   });
 
@@ -91,8 +99,77 @@ export const CreateExpense = () => {
     fetchData();
   }, [groupId]);
 
+  // Watch fields for dynamic split calculations
+  const watchedSplitType = watch('splitType');
+  const watchedAmount = watch('amount');
+  const watchedParticipantIds = watch('participantIds') || [];
+  const watchedExactShares = watch('exactShares') || {};
+  const watchedPercentageShares = watch('percentageShares') || {};
+
+  // Compute live summation diagnostics
+  let sumText = '';
+  let sumColor = 'text.secondary';
+  let isSumValid = true;
+
+  if (watchedSplitType === 'EXACT') {
+    const totalExact = watchedParticipantIds.reduce((acc, id) => {
+      const val = parseFloat(watchedExactShares[id] || 0);
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+    const targetAmt = parseFloat(watchedAmount) || 0;
+    sumText = `Total Allocated: ${totalExact.toFixed(2)} / ${targetAmt.toFixed(2)}`;
+    isSumValid = Math.abs(totalExact - targetAmt) < 0.01;
+    sumColor = isSumValid ? 'success.main' : 'error.main';
+  } else if (watchedSplitType === 'PERCENTAGE') {
+    const totalPct = watchedParticipantIds.reduce((acc, id) => {
+      const val = parseFloat(watchedPercentageShares[id] || 0);
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+    sumText = `Total Percentage: ${totalPct.toFixed(1)}% / 100%`;
+    isSumValid = Math.abs(totalPct - 100) < 0.01;
+    sumColor = isSumValid ? 'success.main' : 'error.main';
+  }
+
   const onSubmit = async (data) => {
     const amt = parseFloat(data.amount);
+    const splitType = data.splitType;
+    let participantsPayload = [];
+
+    // Validation matching splitType rules
+    if (splitType === 'EQUAL') {
+      participantsPayload = data.participantIds.map(id => parseInt(id, 10));
+    } else if (splitType === 'EXACT') {
+      let totalSharesSum = 0;
+      participantsPayload = data.participantIds.map(id => {
+        const shareVal = parseFloat(data.exactShares?.[id] || 0);
+        totalSharesSum += shareVal;
+        return {
+          userId: parseInt(id, 10),
+          shareAmount: shareVal
+        };
+      });
+
+      if (Math.abs(totalSharesSum - amt) > 0.01) {
+        toast.error(`Total shares must sum exactly to the expense amount (${data.currency} ${amt}). Current sum: ${data.currency} ${totalSharesSum.toFixed(2)}`);
+        return;
+      }
+    } else if (splitType === 'PERCENTAGE') {
+      let totalPercentageSum = 0;
+      participantsPayload = data.participantIds.map(id => {
+        const pctVal = parseFloat(data.percentageShares?.[id] || 0);
+        totalPercentageSum += pctVal;
+        return {
+          userId: parseInt(id, 10),
+          percentage: pctVal
+        };
+      });
+
+      if (Math.abs(totalPercentageSum - 100) > 0.01) {
+        toast.error(`Total percentage must sum exactly to 100%. Current sum: ${totalPercentageSum.toFixed(2)}%`);
+        return;
+      }
+    }
+
     const payload = {
       title: data.title.trim(),
       description: data.description.trim() || null,
@@ -100,7 +177,8 @@ export const CreateExpense = () => {
       currency: data.currency,
       expenseDate: data.expenseDate,
       paidBy: parseInt(data.paidBy, 10),
-      participantIds: data.participantIds.map(id => parseInt(id, 10))
+      splitType,
+      participants: participantsPayload
     };
 
     try {
@@ -297,6 +375,33 @@ export const CreateExpense = () => {
                 />
               </Grid>
 
+              {/* Split Type Selector */}
+              <Grid item xs={12}>
+                <Controller
+                  name="splitType"
+                  control={control}
+                  rules={{ required: 'Split Type is required.' }}
+                  render={({ field }) => (
+                    <FormControl fullWidth error={!!errors.splitType}>
+                      <InputLabel id="split-type-label">Split Type</InputLabel>
+                      <Select
+                        labelId="split-type-label"
+                        label="Split Type"
+                        disabled={submitting}
+                        {...field}
+                      >
+                        <MenuItem value="EQUAL">Equal</MenuItem>
+                        <MenuItem value="EXACT">Exact</MenuItem>
+                        <MenuItem value="PERCENTAGE">Percentage</MenuItem>
+                      </Select>
+                      {errors.splitType && (
+                        <FormHelperText>{errors.splitType.message}</FormHelperText>
+                      )}
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+
               {/* Split Participants Multi Select */}
               <Grid item xs={12}>
                 <Controller
@@ -342,6 +447,94 @@ export const CreateExpense = () => {
                 />
               </Grid>
 
+              {/* Dynamic Shares Allocation Inputs */}
+              {watchedSplitType !== 'EQUAL' && watchedParticipantIds.length > 0 && (
+                <Grid item xs={12}>
+                  <Paper 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 2, 
+                      backgroundColor: 'rgba(255, 255, 255, 0.01)', 
+                      borderColor: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '12px'
+                    }}
+                  >
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>
+                      Split Shares Allocation
+                    </Typography>
+                    
+                    <List sx={{ p: 0, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                      {watchedParticipantIds.map((userId) => {
+                        const memberObj = members.find(m => m.userId === userId);
+                        return (
+                          <ListItem 
+                            key={userId}
+                            disablePadding
+                            sx={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center',
+                              gap: 2 
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: 1 }}>
+                              <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: '0.875rem' }}>
+                                {memberObj?.user?.name?.[0]?.toUpperCase() || 'U'}
+                              </Avatar>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {memberObj?.user?.name || `User #${userId}`}
+                              </Typography>
+                            </Box>
+                            
+                            <Box sx={{ width: 150 }}>
+                              {watchedSplitType === 'EXACT' ? (
+                                <TextField
+                                  label="Amount"
+                                  size="small"
+                                  type="number"
+                                  disabled={submitting}
+                                  slotProps={{
+                                    htmlInput: { step: '0.01', min: '0' }
+                                  }}
+                                  placeholder="0.00"
+                                  {...register(`exactShares.${userId}`, {
+                                    required: 'Amount is required.',
+                                    validate: (val) => parseFloat(val) >= 0 || 'Must be >= 0'
+                                  })}
+                                />
+                              ) : (
+                                <TextField
+                                  label="Percentage (%)"
+                                  size="small"
+                                  type="number"
+                                  disabled={submitting}
+                                  slotProps={{
+                                    htmlInput: { step: '0.1', min: '0', max: '100' }
+                                  }}
+                                  placeholder="0"
+                                  {...register(`percentageShares.${userId}`, {
+                                    required: 'Percentage is required.',
+                                    validate: (val) => parseFloat(val) >= 0 || 'Must be >= 0'
+                                  })}
+                                />
+                              )}
+                            </Box>
+                          </ListItem>
+                        );
+                      })}
+                    </List>
+                    
+                    <Divider sx={{ my: 1.5, borderColor: 'rgba(255, 255, 255, 0.05)' }} />
+                    
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: sumColor }}>
+                        {sumText}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+              )}
+
               {/* Submit Buttons */}
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
                 <Button 
@@ -364,7 +557,7 @@ export const CreateExpense = () => {
                   type="submit" 
                   variant="contained" 
                   color="primary"
-                  disabled={submitting}
+                  disabled={submitting || (!isSumValid && watchedSplitType !== 'EQUAL')}
                   sx={{ px: 4, fontWeight: 700 }}
                 >
                   {submitting ? 'Recording...' : 'Record Expense'}

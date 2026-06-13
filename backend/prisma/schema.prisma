@@ -17,6 +17,8 @@ model User {
   memberships           GroupMember[]
   paidExpenses          Expense[]
   expenseParticipations ExpenseParticipant[]
+  paidSettlements       Settlement[]         @relation("PaidSettlements")
+  receivedSettlements   Settlement[]         @relation("ReceivedSettlements")
 }
 
 model Group {
@@ -29,6 +31,7 @@ model Group {
   updatedAt   DateTime      @updatedAt
   members     GroupMember[]
   expenses    Expense[]
+  settlements Settlement[]
 }
 
 model GroupMember {
@@ -82,4 +85,23 @@ model ExpenseParticipant {
   @@unique([expenseId, userId])
   @@index([expenseId])
   @@index([userId])
+}
+
+model Settlement {
+  id             Int      @id @default(autoincrement())
+  groupId        Int
+  group          Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  payerId        Int
+  payer          User     @relation("PaidSettlements", fields: [payerId], references: [id], onDelete: Cascade)
+  receiverId     Int
+  receiver       User     @relation("ReceivedSettlements", fields: [receiverId], references: [id], onDelete: Cascade)
+  amount         Decimal  @db.Decimal(10, 2)
+  currency       String
+  settlementDate DateTime
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  @@index([groupId])
+  @@index([payerId])
+  @@index([receiverId])
 }
