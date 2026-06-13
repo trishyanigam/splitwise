@@ -32,10 +32,12 @@ import GroupIcon from '@mui/icons-material/Group';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import PaymentIcon from '@mui/icons-material/Payment';
 import { toast } from 'react-hot-toast';
 import { getGroupById, updateGroup, deleteGroup } from '../../services/groupService.js';
 import { getMembers, getMembershipHistory } from '../../services/membershipService.js';
 import { getExpenses } from '../../services/expenseService.js';
+import { getSettlements } from '../../services/settlementService.js';
 import { AddMemberDialog } from '../../components/AddMemberDialog.jsx';
 import { MembershipHistory } from '../../components/MembershipHistory.jsx';
 
@@ -66,16 +68,21 @@ export const GroupDetails = () => {
   const [expenses, setExpenses] = useState([]);
   const [expensesCount, setExpensesCount] = useState(0);
 
+  // Settlements States
+  const [settlements, setSettlements] = useState([]);
+  const [settlementsCount, setSettlementsCount] = useState(0);
+
   const fetchGroupData = async () => {
     try {
       setLoading(true);
       setError(null);
-      // Parallel requests for Group metadata, active members, logs history, and expenses
-      const [groupRes, membersRes, historyRes, expensesRes] = await Promise.all([
+      // Parallel requests for Group metadata, active members, logs history, expenses, and settlements
+      const [groupRes, membersRes, historyRes, expensesRes, settlementsRes] = await Promise.all([
         getGroupById(groupId),
         getMembers(groupId),
         getMembershipHistory(groupId),
-        getExpenses(groupId)
+        getExpenses(groupId),
+        getSettlements(groupId)
       ]);
 
       if (groupRes && groupRes.group) {
@@ -95,6 +102,11 @@ export const GroupDetails = () => {
       if (expensesRes && expensesRes.expenses) {
         setExpenses(expensesRes.expenses);
         setExpensesCount(expensesRes.expenses.length);
+      }
+
+      if (settlementsRes && settlementsRes.settlements) {
+        setSettlements(settlementsRes.settlements);
+        setSettlementsCount(settlementsRes.settlements.length);
       }
     } catch (err) {
       console.error('Failed to fetch group details:', err);
@@ -536,6 +548,108 @@ export const GroupDetails = () => {
                         </Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                           {expense.participants?.length || 0} splitters
+                        </Typography>
+                      </Box>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Paper>
+
+            {/* Recent Settlements Section */}
+            <Paper 
+              elevation={0}
+              sx={{ 
+                p: 3, 
+                backgroundColor: 'background.paper', 
+                border: '1px solid rgba(255, 255, 255, 0.05)', 
+                borderRadius: '16px' 
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <PaymentIcon sx={{ color: 'primary.main' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    Recent Settlements ({settlementsCount})
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button 
+                    size="small" 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={() => navigate(`/groups/${groupId}/settlements/create`)}
+                    sx={{ fontWeight: 600 }}
+                  >
+                    Create Settlement
+                  </Button>
+                  <Button 
+                    size="small" 
+                    variant="outlined" 
+                    onClick={() => navigate(`/groups/${groupId}/settlements`)}
+                    sx={{ 
+                      fontWeight: 600,
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      color: 'text.primary',
+                      '&:hover': {
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                      }
+                    }}
+                  >
+                    View Settlements
+                  </Button>
+                </Box>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              
+              {settlements.length === 0 ? (
+                <Box sx={{ py: 4, textAlign: 'center', border: '1px dashed rgba(255, 255, 255, 0.08)', borderRadius: '8px' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No settlements recorded in this group yet. Settle balances to track payments.
+                  </Typography>
+                </Box>
+              ) : (
+                <List sx={{ p: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {settlements.slice(0, 5).map((settlement) => (
+                    <ListItem 
+                      key={settlement.id} 
+                      onClick={() => navigate(`/groups/${groupId}/settlements/${settlement.id}`)}
+                      sx={{ 
+                        px: 2, 
+                        py: 1.5, 
+                        borderRadius: '8px', 
+                        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid rgba(255, 255, 255, 0.03)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          borderColor: 'rgba(255, 255, 255, 0.08)',
+                          transform: 'translateX(4px)'
+                        }
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: 'rgba(16, 185, 129, 0.1)', color: 'success.main', width: 40, height: 40 }}>
+                          <PaymentIcon />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText 
+                        primary={
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                            {settlement.payer?.name} paid {settlement.receiver?.name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography variant="caption" color="text.secondary">
+                            Recorded on {new Date(settlement.settlementDate).toLocaleDateString()}
+                          </Typography>
+                        }
+                      />
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'success.main' }}>
+                          {settlement.currency} {Number(settlement.amount).toFixed(2)}
                         </Typography>
                       </Box>
                     </ListItem>
