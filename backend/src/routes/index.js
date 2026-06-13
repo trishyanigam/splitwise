@@ -8,6 +8,7 @@ const settlementRoutes = require('./settlementRoutes.js');
 const balanceRoutes = require('./balanceRoutes.js');
 const debtRoutes = require('./debtRoutes.js');
 const auditRoutes = require('./auditRoutes.js');
+const importRoutes = require('./importRoutes.js');
 
 const router = Router();
 
@@ -37,5 +38,8 @@ router.use('/groups/:groupId/settlements', settlementRoutes);
 
 // Mount split calculation routes under /splits
 router.use('/splits', splitRoutes);
+
+// Mount CSV import routes under /import
+router.use('/import', importRoutes);
 
 module.exports = router;

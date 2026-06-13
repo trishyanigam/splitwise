@@ -19,6 +19,7 @@ model User {
   expenseParticipations ExpenseParticipant[]
   paidSettlements       Settlement[]         @relation("PaidSettlements")
   receivedSettlements   Settlement[]         @relation("ReceivedSettlements")
+  uploadedSessions      ImportSession[]      @relation("UploadedSessions")
 }
 
 model Group {
@@ -108,4 +109,43 @@ model Settlement {
   @@index([groupId])
   @@index([payerId])
   @@index([receiverId])
+}
+
+enum ImportSessionStatus {
+  PENDING
+  PROCESSING
+  REVIEW_REQUIRED
+  COMPLETED
+  FAILED
+}
+
+enum ImportRecordStatus {
+  PENDING
+  VALID
+  INVALID
+  REVIEW_REQUIRED
+}
+
+model ImportSession {
+  id               Int                 @id @default(autoincrement())
+  uploadedById     Int
+  uploadedBy       User                @relation("UploadedSessions", fields: [uploadedById], references: [id], onDelete: Cascade)
+  originalFileName String
+  status           ImportSessionStatus @default(PENDING)
+  totalRows        Int                 @default(0)
+  createdAt        DateTime            @default(now())
+  records          ImportRecord[]
+
+  @@index([uploadedById])
+}
+
+model ImportRecord {
+  id              Int                @id @default(autoincrement())
+  importSessionId Int
+  importSession   ImportSession      @relation(fields: [importSessionId], references: [id], onDelete: Cascade)
+  rowNumber       Int
+  rawData         Json
+  status          ImportRecordStatus @default(PENDING)
+
+  @@index([importSessionId])
 }

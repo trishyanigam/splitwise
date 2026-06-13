@@ -26,6 +26,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { getUserSummary } from '../../services/balanceService.js';
 import useAuth from '../../hooks/useAuth.js';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 
 /**
@@ -126,13 +127,24 @@ export const UserBalanceSummary = () => {
   return (
     <Box>
       {/* Header Panel */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.02em', mb: 1 }}>
-          Balances Dashboard
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Summary of your active ledger standings across all <strong>{totalGroups}</strong> group memberships.
-        </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.02em', mb: 1 }}>
+            Balances Dashboard
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Summary of your active ledger standings across all <strong>{totalGroups}</strong> group memberships.
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<CloudUploadIcon />}
+          onClick={() => navigate('/import')}
+          sx={{ fontWeight: 600 }}
+        >
+          Import Expenses CSV
+        </Button>
       </Box>
 
       {/* Grid of Metric Cards */}
