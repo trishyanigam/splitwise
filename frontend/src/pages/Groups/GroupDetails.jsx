@@ -35,6 +35,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { toast } from 'react-hot-toast';
 import { getGroupById, updateGroup, deleteGroup } from '../../services/groupService.js';
 import { getMembers, getMembershipHistory } from '../../services/membershipService.js';
+import { getExpenses } from '../../services/expenseService.js';
 import { AddMemberDialog } from '../../components/AddMemberDialog.jsx';
 import { MembershipHistory } from '../../components/MembershipHistory.jsx';
 
@@ -61,15 +62,20 @@ export const GroupDetails = () => {
   const [activeTab, setActiveTab] = useState(0); // 0 = Active Members, 1 = History
   const [addMemberOpen, setAddMemberOpen] = useState(false);
 
+  // Expenses States
+  const [expenses, setExpenses] = useState([]);
+  const [expensesCount, setExpensesCount] = useState(0);
+
   const fetchGroupData = async () => {
     try {
       setLoading(true);
       setError(null);
-      // Parallel requests for Group metadata, active members, and logs history
-      const [groupRes, membersRes, historyRes] = await Promise.all([
+      // Parallel requests for Group metadata, active members, logs history, and expenses
+      const [groupRes, membersRes, historyRes, expensesRes] = await Promise.all([
         getGroupById(groupId),
         getMembers(groupId),
-        getMembershipHistory(groupId)
+        getMembershipHistory(groupId),
+        getExpenses(groupId)
       ]);
 
       if (groupRes && groupRes.group) {
@@ -84,6 +90,11 @@ export const GroupDetails = () => {
 
       if (historyRes && historyRes.history) {
         setHistoryData(historyRes.history);
+      }
+
+      if (expensesRes && expensesRes.expenses) {
+        setExpenses(expensesRes.expenses);
+        setExpensesCount(expensesRes.expenses.length);
       }
     } catch (err) {
       console.error('Failed to fetch group details:', err);
@@ -428,7 +439,7 @@ export const GroupDetails = () => {
               )}
             </Paper>
 
-            {/* Expenses Placeholder Section */}
+            {/* Expenses Section */}
             <Paper 
               elevation={0}
               sx={{ 
@@ -438,23 +449,99 @@ export const GroupDetails = () => {
                 borderRadius: '16px' 
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <ReceiptLongIcon sx={{ color: 'secondary.main' }} />
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    Expenses
+                    Expenses ({expensesCount})
                   </Typography>
                 </Box>
-                <Button size="small" variant="text" color="primary" disabled sx={{ fontWeight: 600 }}>
-                  + Add Expense
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button 
+                    size="small" 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={() => navigate(`/groups/${groupId}/expenses/create`)}
+                    sx={{ fontWeight: 600 }}
+                  >
+                    Create Expense
+                  </Button>
+                  <Button 
+                    size="small" 
+                    variant="outlined" 
+                    onClick={() => navigate(`/groups/${groupId}/expenses`)}
+                    sx={{ 
+                      fontWeight: 600,
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      color: 'text.primary',
+                      '&:hover': {
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                      }
+                    }}
+                  >
+                    View Expenses
+                  </Button>
+                </Box>
               </Box>
               <Divider sx={{ mb: 2 }} />
-              <Box sx={{ py: 4, textAlign: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
-                  No expenses split in this group yet. Track bills here to split them evenly.
-                </Typography>
-              </Box>
+              
+              {expenses.length === 0 ? (
+                <Box sx={{ py: 4, textAlign: 'center', border: '1px dashed rgba(255, 255, 255, 0.08)', borderRadius: '8px' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No expenses split in this group yet. Track bills here to split them evenly.
+                  </Typography>
+                </Box>
+              ) : (
+                <List sx={{ p: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {expenses.slice(0, 5).map((expense) => (
+                    <ListItem 
+                      key={expense.id} 
+                      onClick={() => navigate(`/groups/${groupId}/expenses/${expense.id}`)}
+                      sx={{ 
+                        px: 2, 
+                        py: 1.5, 
+                        borderRadius: '8px', 
+                        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                        border: '1px solid rgba(255, 255, 255, 0.03)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          borderColor: 'rgba(255, 255, 255, 0.08)',
+                          transform: 'translateX(4px)'
+                        }
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: 'rgba(244, 63, 94, 0.1)', color: 'secondary.main', width: 40, height: 40 }}>
+                          <ReceiptLongIcon />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText 
+                        primary={
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                            {expense.title}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography variant="caption" color="text.secondary">
+                            Paid by <strong>{expense.paidBy?.name || 'Unknown'}</strong> • {new Date(expense.expenseDate).toLocaleDateString()}
+                          </Typography>
+                        }
+                      />
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                          {expense.currency} {Number(expense.amount).toFixed(2)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                          {expense.participants?.length || 0} splitters
+                        </Typography>
+                      </Box>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
             </Paper>
 
             {/* Balances Placeholder Section */}

@@ -14,6 +14,9 @@ const GroupsList = lazy(() => import('../pages/Groups/GroupsList.jsx'));
 const CreateGroup = lazy(() => import('../pages/Groups/CreateGroup.jsx'));
 const GroupDetails = lazy(() => import('../pages/Groups/GroupDetails.jsx'));
 const MembersPage = lazy(() => import('../pages/Groups/MembersPage.jsx'));
+const ExpensesList = lazy(() => import('../pages/Expenses/ExpensesList.jsx'));
+const CreateExpense = lazy(() => import('../pages/Expenses/CreateExpense.jsx'));
+const ExpenseDetails = lazy(() => import('../pages/Expenses/ExpenseDetails.jsx'));
 
 // Premium dynamic spinner layout fallback
 const LoadingFallback = () => (
@@ -23,31 +26,38 @@ const LoadingFallback = () => (
 );
 
 /**
- * Maps application paths using React Router DOM.
- * Integrates code-splitting using lazy-loaded routes inside a Suspense fallback boundary.
+ * React Router configuration mapping application paths.
+ * Utilizes code-splitting via lazy loading and secures authentication routes.
  */
 export const AppRoutes = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        {/* Authentication / Onboarding routes (redirects logged-in users away) */}
+        {/* Public authentication / onboarding routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Route>
 
-        {/* Authenticated Application routes (redirects unauthenticated users to /login) */}
+        {/* Protected Application Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            
+            {/* Groups Management */}
             <Route path="/groups" element={<GroupsList />} />
             <Route path="/groups/create" element={<CreateGroup />} />
             <Route path="/groups/:groupId" element={<GroupDetails />} />
             <Route path="/groups/:groupId/members" element={<MembersPage />} />
+            
+            {/* Expenses Management */}
+            <Route path="/groups/:groupId/expenses" element={<ExpensesList />} />
+            <Route path="/groups/:groupId/expenses/create" element={<CreateExpense />} />
+            <Route path="/groups/:groupId/expenses/:expenseId" element={<ExpenseDetails />} />
           </Route>
         </Route>
 
-        {/* Redirect defaults */}
+        {/* Route redirection fallbacks */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

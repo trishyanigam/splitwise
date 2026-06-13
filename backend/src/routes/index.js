@@ -2,6 +2,7 @@ const { Router } = require('express');
 const authRoutes = require('./authRoutes.js');
 const groupRoutes = require('./groupRoutes.js');
 const memberRoutes = require('./memberRoutes.js');
+const expenseRoutes = require('./expenseRoutes.js');
 
 const router = Router();
 
@@ -13,5 +14,8 @@ router.use('/groups', groupRoutes);
 
 // Mount membership routes under /groups/:groupId/members
 router.use('/groups/:groupId/members', memberRoutes);
+
+// Mount expense routes under /groups/:groupId/expenses
+router.use('/groups/:groupId/expenses', expenseRoutes);
 
 module.exports = router;

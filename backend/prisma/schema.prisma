@@ -8,13 +8,15 @@ datasource db {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String
-  email        String        @unique
-  passwordHash String
-  createdAt    DateTime      @default(now())
-  ownedGroups  Group[]
-  memberships  GroupMember[]
+  id                    Int                  @id @default(autoincrement())
+  name                  String
+  email                 String               @unique
+  passwordHash          String
+  createdAt             DateTime             @default(now())
+  ownedGroups           Group[]
+  memberships           GroupMember[]
+  paidExpenses          Expense[]
+  expenseParticipations ExpenseParticipant[]
 }
 
 model Group {
@@ -26,6 +28,7 @@ model Group {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   members     GroupMember[]
+  expenses    Expense[]
 }
 
 model GroupMember {
@@ -38,5 +41,36 @@ model GroupMember {
   leftAt    DateTime?
 
   @@index([groupId])
+  @@index([userId])
+}
+
+model Expense {
+  id           Int                  @id @default(autoincrement())
+  groupId      Int
+  group        Group                @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  amount       Decimal              @db.Decimal(10, 2)
+  currency     String
+  expenseDate  DateTime
+  paidById     Int
+  paidBy       User                 @relation(fields: [paidById], references: [id], onDelete: Cascade)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  participants ExpenseParticipant[]
+
+  @@index([groupId])
+  @@index([paidById])
+}
+
+model ExpenseParticipant {
+  id        Int     @id @default(autoincrement())
+  expenseId Int
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([expenseId, userId])
+  @@index([expenseId])
   @@index([userId])
 }
