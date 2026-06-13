@@ -9,6 +9,7 @@ const balanceRoutes = require('./balanceRoutes.js');
 const debtRoutes = require('./debtRoutes.js');
 const auditRoutes = require('./auditRoutes.js');
 const importRoutes = require('./importRoutes.js');
+const importExecutionRoutes = require('./importExecutionRoutes.js');
 const reviewRoutes = require('./reviewRoutes.js');
 const resolutionRoutes = require('./resolutionRoutes.js');
 
@@ -44,6 +45,7 @@ router.use('/splits', splitRoutes);
 // Mount CSV import routes under /import
 router.use('/import', importRoutes);
 router.use('/import', resolutionRoutes);
+router.use('/import', importExecutionRoutes);
 
 // Mount anomaly review routes under /review
 router.use('/review', reviewRoutes);

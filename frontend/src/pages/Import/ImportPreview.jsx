@@ -158,29 +158,45 @@ export const ImportPreview = () => {
   return (
     <Box>
       {/* Header Bar */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 4 }}>
-        <IconButton
-          onClick={() => navigate('/balances')}
-          sx={{
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '8px',
-            color: 'text.secondary',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.03)',
-              color: 'text.primary'
-            }
-          }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Box>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
-            CSV Import Preview
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Reviewing details for file: <strong>{session.originalFileName}</strong>
-          </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <IconButton
+            onClick={() => navigate('/balances')}
+            sx={{
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '8px',
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                color: 'text.primary'
+              }
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Box>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+              CSV Import Preview
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Reviewing details for file: <strong>{session.originalFileName}</strong>
+            </Typography>
+          </Box>
         </Box>
+
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate(`/import/${sessionId}/execute`)}
+            sx={{
+              fontWeight: 800,
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
+            }}
+          >
+            {session.status === 'COMPLETED' ? 'View Execution Summary' : 'Proceed to Import'}
+          </Button>
+        </Stack>
       </Box>
 
       {/* Grid of Metrics Cards */}

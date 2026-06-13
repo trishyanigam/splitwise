@@ -10,7 +10,7 @@ const prisma = require('../../config/prisma.js');
  * @returns {string}
  */
 function normaliseKey(key) {
-  return key.trim().toLowerCase().replace(/\s+/g, '');
+  return key.trim().toLowerCase().replace(/[\s_-]+/g, '');
 }
 
 /**

@@ -175,6 +175,30 @@ export const getAnomalyResolutionHistory = async (anomalyId) => {
   return response.data;
 };
 
+/**
+ * Starts import execution for a staged session.
+ * Route: POST /api/import/:sessionId/execute
+ *
+ * @param {number|string} sessionId
+ * @returns {Promise<Object>} Execution summary details (response data only).
+ */
+export const executeImport = async (sessionId) => {
+  const response = await api.post(`/import/${sessionId}/execute`);
+  return response.data;
+};
+
+/**
+ * Retrieves the latest execution status/progress for a session.
+ * Route: GET /api/import/:sessionId/execution
+ *
+ * @param {number|string} sessionId
+ * @returns {Promise<Object>} Execution details and progress (response data only).
+ */
+export const getExecutionStatus = async (sessionId) => {
+  const response = await api.get(`/import/${sessionId}/execution`);
+  return response.data;
+};
+
 export default {
   uploadCsv,
   getImportSession,
@@ -189,6 +213,8 @@ export default {
   mergeDuplicateAnomaly,
   resolveDuplicate,
   resolveAnomalyStrategy,
-  getAnomalyResolutionHistory
+  getAnomalyResolutionHistory,
+  executeImport,
+  getExecutionStatus
 };
 

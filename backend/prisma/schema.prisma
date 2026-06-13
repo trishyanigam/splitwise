@@ -137,6 +137,7 @@ model ImportSession {
   createdAt        DateTime            @default(now())
   records          ImportRecord[]
   anomalies        ImportAnomaly[]
+  executions       ImportExecution[]
 
   @@index([uploadedById])
 }
@@ -222,3 +223,27 @@ model ImportResolution {
 
   @@index([anomalyId])
 }
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model ImportExecution {
+  id              Int             @id @default(autoincrement())
+  importSessionId Int
+  importSession   ImportSession   @relation(fields: [importSessionId], references: [id], onDelete: Cascade)
+  totalRecords    Int             @default(0)
+  importedRecords Int             @default(0)
+  skippedRecords  Int             @default(0)
+  failedRecords   Int             @default(0)
+  executionStatus ExecutionStatus @default(PENDING)
+  startedAt       DateTime        @default(now())
+  completedAt     DateTime?
+
+  @@index([importSessionId])
+  @@index([executionStatus])
+}
+

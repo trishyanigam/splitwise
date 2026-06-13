@@ -102,6 +102,13 @@ async function applyResolution(anomalyId, resolutionType, resolvedValue = null, 
       notes = 'User rejected this record. It will be skipped on ledger commits.';
       break;
 
+    case 'MERGED':
+      anomalyStatus = 'FIXED';
+      decision = 'MERGED';
+      recordStatus = 'VALID';
+      notes = 'Merged with another duplicate record. Row will be skipped on ledger commits.';
+      break;
+
     case 'CONVERT_TO_REFUND':
       // Invert negative amount to positive refund value
       let originalAmount = null;

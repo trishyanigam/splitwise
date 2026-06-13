@@ -31,6 +31,7 @@ const AnomalyReview = lazy(() => import('../pages/Import/AnomalyReview.jsx'));
 const DuplicateReview = lazy(() => import('../pages/Import/DuplicateReview.jsx'));
 const ManualFix = lazy(() => import('../pages/Import/ManualFix.jsx'));
 const ResolutionCenter = lazy(() => import('../pages/Import/ResolutionCenter.jsx'));
+const ExecuteImport = lazy(() => import('../pages/Import/ExecuteImport.jsx'));
 
 // Premium dynamic spinner layout fallback
 const LoadingFallback = () => (
@@ -52,7 +53,7 @@ export const AppRoutes = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Route>
-
+ 
         {/* Protected Application Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
@@ -86,6 +87,7 @@ export const AppRoutes = () => {
             <Route path="/import/:sessionId/anomalies/:anomalyId/fix" element={<ManualFix />} />
             <Route path="/import/:sessionId/duplicates" element={<DuplicateReview />} />
             <Route path="/import/:sessionId/resolution-center" element={<ResolutionCenter />} />
+            <Route path="/import/:sessionId/execute" element={<ExecuteImport />} />
           </Route>
         </Route>
 

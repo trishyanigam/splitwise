@@ -64,7 +64,7 @@ const FIELD_VALIDATORS = {
  * @returns {string}
  */
 function normaliseKey(key) {
-  return String(key).trim().toLowerCase().replace(/\s+/g, '');
+  return String(key).trim().toLowerCase().replace(/[\s_-]+/g, '');
 }
 
 /**
