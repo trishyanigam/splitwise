@@ -1,5 +1,6 @@
 const prisma = require('../../config/prisma.js');
 const membershipService = require('../group/membershipService.js');
+const { simplifyDebts } = require('../debt/debtSimplificationService.js');
 
 /**
  * Checks if a user is active in the group on a specific transaction date.
@@ -23,63 +24,7 @@ function isMemberActiveOnDate(member, date) {
   return true;
 }
 
-/**
- * Simplifies mutual debts inside a group based on net user balances.
- * 
- * @param {Array} memberBalances - Array of objects { userId: number, balance: number }
- * @returns {Array} List of optimized transactions { from: userId, to: userId, amount: number }
- */
-function simplifyDebts(memberBalances) {
-  let debtors = [];
-  let creditors = [];
-  
-  for (const member of memberBalances) {
-    const balance = Math.round(member.balance * 100) / 100;
-    if (balance < 0) {
-      debtors.push({ userId: member.userId, amount: -balance });
-    } else if (balance > 0) {
-      creditors.push({ userId: member.userId, amount: balance });
-    }
-  }
-  
-  // Sort descending to settle largest balances first
-  debtors.sort((a, b) => b.amount - a.amount);
-  creditors.sort((a, b) => b.amount - a.amount);
-  
-  const transactions = [];
-  let dIdx = 0;
-  let cIdx = 0;
-  
-  while (dIdx < debtors.length && cIdx < creditors.length) {
-    const debtor = debtors[dIdx];
-    const creditor = creditors[cIdx];
-    
-    if (debtor.amount < 0.01) {
-      dIdx++;
-      continue;
-    }
-    if (creditor.amount < 0.01) {
-      cIdx++;
-      continue;
-    }
-    
-    const settleAmount = Math.min(debtor.amount, creditor.amount);
-    
-    transactions.push({
-      from: debtor.userId,
-      to: creditor.userId,
-      amount: settleAmount
-    });
-    
-    debtor.amount = Math.round((debtor.amount - settleAmount) * 100) / 100;
-    creditor.amount = Math.round((creditor.amount - settleAmount) * 100) / 100;
-    
-    if (debtor.amount < 0.01) dIdx++;
-    if (creditor.amount < 0.01) cIdx++;
-  }
-  
-  return transactions;
-}
+
 
 /**
  * Computes net balances and simplified debt transactions for all members in a group.

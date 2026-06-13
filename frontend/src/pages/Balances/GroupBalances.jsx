@@ -253,11 +253,31 @@ export const GroupBalances = () => {
               borderRadius: '16px'
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-              <SwapHorizIcon color="secondary" />
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                Suggested Settlements
-              </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <SwapHorizIcon color="secondary" />
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Suggested Settlements
+                </Typography>
+              </Box>
+              {simplifiedDebts.length > 0 && (
+                <Button 
+                  size="small" 
+                  variant="outlined" 
+                  onClick={() => navigate(`/groups/${groupId}/simplified-debts`)}
+                  sx={{ 
+                    fontWeight: 600,
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    color: 'text.primary',
+                    '&:hover': {
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                    }
+                  }}
+                >
+                  View Details
+                </Button>
+              )}
             </Box>
             <Divider sx={{ mb: 2 }} />
 

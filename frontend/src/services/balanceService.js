@@ -19,7 +19,18 @@ export const getUserSummary = async () => {
   return response.data;
 };
 
+/**
+ * Retrieves optimized/simplified debt transactions for a specific group.
+ * @param {number|string} groupId 
+ * @returns {Promise<Object>} The API response data
+ */
+export const getSimplifiedDebts = async (groupId) => {
+  const response = await api.get(`/groups/${groupId}/simplified-debts`);
+  return response.data;
+};
+
 export default {
   getGroupBalances,
   getUserSummary,
+  getSimplifiedDebts,
 };

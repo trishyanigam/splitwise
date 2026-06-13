@@ -16,6 +16,7 @@ const GroupDetails = lazy(() => import('../pages/Groups/GroupDetails.jsx'));
 const MembersPage = lazy(() => import('../pages/Groups/MembersPage.jsx'));
 const GroupBalances = lazy(() => import('../pages/Balances/GroupBalances.jsx'));
 const UserBalanceSummary = lazy(() => import('../pages/Balances/UserBalanceSummary.jsx'));
+const SimplifiedDebts = lazy(() => import('../pages/Balances/SimplifiedDebts.jsx'));
 const ExpensesList = lazy(() => import('../pages/Expenses/ExpensesList.jsx'));
 const CreateExpense = lazy(() => import('../pages/Expenses/CreateExpense.jsx'));
 const ExpenseDetails = lazy(() => import('../pages/Expenses/ExpenseDetails.jsx'));
@@ -55,6 +56,7 @@ export const AppRoutes = () => {
             <Route path="/groups/:groupId" element={<GroupDetails />} />
             <Route path="/groups/:groupId/members" element={<MembersPage />} />
             <Route path="/groups/:groupId/balances" element={<GroupBalances />} />
+            <Route path="/groups/:groupId/simplified-debts" element={<SimplifiedDebts />} />
             
             {/* Expenses Management */}
             <Route path="/groups/:groupId/expenses" element={<ExpensesList />} />

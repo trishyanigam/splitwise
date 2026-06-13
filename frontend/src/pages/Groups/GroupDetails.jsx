@@ -74,6 +74,7 @@ export const GroupDetails = () => {
 
   // Balances State
   const [balances, setBalances] = useState([]);
+  const [simplifiedDebts, setSimplifiedDebts] = useState([]);
 
   const fetchGroupData = async () => {
     try {
@@ -113,8 +114,9 @@ export const GroupDetails = () => {
         setSettlementsCount(settlementsRes.settlements.length);
       }
 
-      if (balancesRes && balancesRes.balances) {
-        setBalances(balancesRes.balances);
+      if (balancesRes) {
+        setBalances(balancesRes.balances || []);
+        setSimplifiedDebts(balancesRes.simplifiedDebts || []);
       }
     } catch (err) {
       console.error('Failed to fetch group details:', err);
@@ -676,31 +678,70 @@ export const GroupDetails = () => {
                 borderRadius: '16px' 
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, flexWrap: 'wrap', gap: 1.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <AccountBalanceIcon sx={{ color: 'primary.main' }} />
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>
                     Balances Summary
                   </Typography>
                 </Box>
-                <Button 
-                  size="small" 
-                  variant="outlined" 
-                  onClick={() => navigate(`/groups/${groupId}/balances`)}
-                  sx={{ 
-                    fontWeight: 600,
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                    color: 'text.primary',
-                    '&:hover': {
-                      borderColor: 'rgba(255, 255, 255, 0.2)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.02)'
-                    }
-                  }}
-                >
-                  View Balances
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button 
+                    size="small" 
+                    variant="outlined" 
+                    onClick={() => navigate(`/groups/${groupId}/balances`)}
+                    sx={{ 
+                      fontWeight: 600,
+                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                      color: 'text.primary',
+                      '&:hover': {
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.02)'
+                      }
+                    }}
+                  >
+                    View Balances
+                  </Button>
+                  {simplifiedDebts.length > 0 && (
+                    <Button 
+                      size="small" 
+                      variant="contained" 
+                      color="secondary" 
+                      onClick={() => navigate(`/groups/${groupId}/simplified-debts`)}
+                      sx={{ fontWeight: 600 }}
+                    >
+                      View Simplified Debts
+                    </Button>
+                  )}
+                </Box>
               </Box>
               <Divider sx={{ mb: 2 }} />
+
+              {/* Outstanding and Transaction metrics */}
+              {balances.length > 0 && (
+                <Grid container spacing={2} sx={{ mb: 2.5 }}>
+                  <Grid item xs={6}>
+                    <Box sx={{ p: 1.8, borderRadius: '12px', backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.03)' }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                        Total Outstanding
+                      </Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                        ₹{balances.filter(b => b.balance > 0).reduce((sum, b) => sum + b.balance, 0).toFixed(2)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Box sx={{ p: 1.8, borderRadius: '12px', backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.03)' }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
+                        Required Transactions
+                      </Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'secondary.main' }}>
+                        {simplifiedDebts.length}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              )}
               
               {balances.length === 0 ? (
                 <Box sx={{ py: 3, textAlign: 'center' }}>
