@@ -12,6 +12,7 @@ const importRoutes = require('./importRoutes.js');
 const importExecutionRoutes = require('./importExecutionRoutes.js');
 const reviewRoutes = require('./reviewRoutes.js');
 const resolutionRoutes = require('./resolutionRoutes.js');
+const reportRoutes = require('./reportRoutes.js');
 
 const router = Router();
 
@@ -49,5 +50,8 @@ router.use('/import', importExecutionRoutes);
 
 // Mount anomaly review routes under /review
 router.use('/review', reviewRoutes);
+
+// Mount report routes under /reports
+router.use('/reports', reportRoutes);
 
 module.exports = router;
