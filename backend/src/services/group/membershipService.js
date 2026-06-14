@@ -22,13 +22,20 @@ const isUserActiveOnDate = async (userId, groupId, date) => {
     throw new Error('Valid userId and groupId are required.');
   }
 
-  // Look for any membership record that overlaps with the targetDate
+  // Normalize dates to calendar-day granularity (ignoring hours/minutes/seconds)
+  const endOfTargetDate = new Date(targetDate);
+  endOfTargetDate.setUTCHours(23, 59, 59, 999);
+
+  const startOfTargetDate = new Date(targetDate);
+  startOfTargetDate.setUTCHours(0, 0, 0, 0);
+
+  // Look for any membership record that overlaps with the targetDate calendar day
   const matchingMembership = await prisma.groupMember.findFirst({
     where: {
       groupId: parsedGroupId,
       userId: parsedUserId,
       joinedAt: {
-        lte: targetDate,
+        lte: endOfTargetDate,
       },
       OR: [
         {
@@ -36,7 +43,7 @@ const isUserActiveOnDate = async (userId, groupId, date) => {
         },
         {
           leftAt: {
-            gte: targetDate,
+            gte: startOfTargetDate,
           },
         },
       ],

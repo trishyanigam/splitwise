@@ -5,11 +5,14 @@ import { CircularProgress, Box } from '@mui/material';
 import AuthLayout from '../layouts/AuthLayout.jsx';
 import AppLayout from '../layouts/AppLayout/AppLayout.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
+import useAuth from '../hooks/useAuth.js';
 
 // Lazy load page components
+const LandingPage = lazy(() => import('../pages/LandingPage/LandingPage.jsx'));
 const Login = lazy(() => import('../pages/Auth/Login.jsx'));
 const Register = lazy(() => import('../pages/Auth/Register.jsx'));
 const Dashboard = lazy(() => import('../pages/Dashboard/Dashboard.jsx'));
+const Profile = lazy(() => import('../pages/Profile/Profile.jsx'));
 const GroupsList = lazy(() => import('../pages/Groups/GroupsList.jsx'));
 const CreateGroup = lazy(() => import('../pages/Groups/CreateGroup.jsx'));
 const GroupDetails = lazy(() => import('../pages/Groups/GroupDetails.jsx'));
@@ -32,6 +35,8 @@ const DuplicateReview = lazy(() => import('../pages/Import/DuplicateReview.jsx')
 const ManualFix = lazy(() => import('../pages/Import/ManualFix.jsx'));
 const ResolutionCenter = lazy(() => import('../pages/Import/ResolutionCenter.jsx'));
 const ExecuteImport = lazy(() => import('../pages/Import/ExecuteImport.jsx'));
+const ImportReport = lazy(() => import('../pages/Reports/ImportReport.jsx'));
+const SystemSummary = lazy(() => import('../pages/Reports/SystemSummary.jsx'));
 
 // Premium dynamic spinner layout fallback
 const LoadingFallback = () => (
@@ -41,6 +46,37 @@ const LoadingFallback = () => (
 );
 
 /**
+ * Route controller for '/' landing page.
+ * If user session is active, redirects straight to dashboard.
+ * Otherwise, renders the public LandingPage.
+ */
+const LandingRedirect = () => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          minHeight: '100vh', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          backgroundColor: '#0b0f19' 
+        }}
+      >
+        <CircularProgress color="primary" />
+      </Box>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <LandingPage />;
+};
+
+/**
  * React Router configuration mapping application paths.
  * Utilizes code-splitting via lazy loading and secures authentication routes.
  */
@@ -48,6 +84,9 @@ export const AppRoutes = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
+        {/* Landing Page with Auth Check */}
+        <Route path="/" element={<LandingRedirect />} />
+
         {/* Public authentication / onboarding routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
@@ -58,6 +97,7 @@ export const AppRoutes = () => {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
             
             {/* Groups Management */}
             <Route path="/groups" element={<GroupsList />} />
@@ -88,12 +128,13 @@ export const AppRoutes = () => {
             <Route path="/import/:sessionId/duplicates" element={<DuplicateReview />} />
             <Route path="/import/:sessionId/resolution-center" element={<ResolutionCenter />} />
             <Route path="/import/:sessionId/execute" element={<ExecuteImport />} />
+            <Route path="/import/:sessionId/report" element={<ImportReport />} />
+            <Route path="/reports/system-summary" element={<SystemSummary />} />
           </Route>
         </Route>
 
         {/* Route redirection fallbacks */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

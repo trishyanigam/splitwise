@@ -62,7 +62,7 @@ export const AuthLayout = () => {
               WebkitTextFillColor: 'transparent' 
             }}
           >
-            Splitwise Shared Expense
+            EquiShare
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Enterprise bill-splitting and group expense manager.

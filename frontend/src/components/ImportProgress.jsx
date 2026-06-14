@@ -10,9 +10,9 @@ import {
   CircularProgress,
   Divider
 } from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import SyncIcon from '@mui/icons-material/Sync';

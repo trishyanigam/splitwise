@@ -20,7 +20,7 @@ import ArrowBackIcon        from '@mui/icons-material/ArrowBack';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import CheckCircleIcon      from '@mui/icons-material/CheckCircle';
 import WarningAmberIcon     from '@mui/icons-material/WarningAmber';
-import ErrorOutlineIcon     from '@mui/icons-material/ErrorOutline';
+import ErrorOutlineIcon     from '@mui/icons-material/ErrorOutlined';
 import ReplayIcon           from '@mui/icons-material/Replay';
 import SkipNextIcon         from '@mui/icons-material/SkipNext';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -462,6 +462,14 @@ export const ExecuteImport = () => {
                       sx={{ fontWeight: 700 }}
                     >
                       View Balances Dashboard
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => navigate(`/import/${sessionId}/report`)}
+                      sx={{ fontWeight: 700, bgcolor: '#818cf8', '&:hover': { bgcolor: '#6366f1' } }}
+                    >
+                      View Import Report
                     </Button>
                     <Button
                       variant="outlined"

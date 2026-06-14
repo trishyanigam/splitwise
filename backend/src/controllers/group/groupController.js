@@ -1,8 +1,14 @@
 const prisma = require('../../config/prisma.js');
 
 /**
- * Controller handling creation of a new group
- * Validates required name field, assigns authenticated user as owner
+ * Controller handling creation of a new group.
+ *
+ * Uses a Prisma interactive transaction to atomically:
+ *   1. Create the Group record.
+ *   2. Create a GroupMember record for the owner (joinedAt = now).
+ *
+ * If either write fails the entire transaction is rolled back, ensuring
+ * no group is created without an owner membership or vice versa.
  */
 const createGroup = async (req, res, next) => {
   try {
@@ -22,12 +28,28 @@ const createGroup = async (req, res, next) => {
       });
     }
 
-    const group = await prisma.group.create({
-      data: {
-        name: name.trim(),
-        description: description && typeof description === 'string' ? description.trim() : null,
-        ownerId: req.user.id,
-      },
+    const group = await prisma.$transaction(async (tx) => {
+      // Step 1: Create the group
+      const newGroup = await tx.group.create({
+        data: {
+          name:        name.trim(),
+          description: description && typeof description === 'string'
+            ? description.trim()
+            : null,
+          ownerId: req.user.id,
+        },
+      });
+
+      // Step 2: Auto-enrol the owner as the first group member
+      await tx.groupMember.create({
+        data: {
+          groupId:  newGroup.id,
+          userId:   req.user.id,
+          joinedAt: new Date(),
+        },
+      });
+
+      return newGroup;
     });
 
     return res.status(201).json({

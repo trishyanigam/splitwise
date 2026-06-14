@@ -44,6 +44,7 @@ model GroupMember {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   joinedAt DateTime  @default(now())
   leftAt   DateTime?
+  isActive Boolean   @default(true)
 
   @@index([groupId])
   @@index([userId])

@@ -84,25 +84,23 @@ export const MembersPage = () => {
 
 
 
-  // Handle Remove Member Click
+  // Handle Leave Member Click
   const handleRemoveClick = (member) => {
     setRemovingMember(member);
     setRemoveOpen(true);
   };
 
-  // Handle Executing Member Removal
+  // Handle Executing Member Leave
   const handleRemoveConfirm = async () => {
     try {
       setRemoveLoading(true);
       await removeMember(groupId, removingMember.userId);
-      toast.success('Member removed successfully.');
-      
-      // Update local members state
-      setMembers(members.filter(m => m.id !== removingMember.id));
+      toast.success('Member left the group successfully.');
       setRemoveOpen(false);
+      await fetchData();
     } catch (err) {
-      console.error('Failed to remove member:', err);
-      toast.error(err.response?.data?.message || err.message || 'Failed to remove member.');
+      console.error('Failed to make member leave:', err);
+      toast.error(err.response?.data?.message || err.message || 'Failed to perform leave action.');
     } finally {
       setRemoveLoading(false);
     }
@@ -252,7 +250,7 @@ export const MembersPage = () => {
                       {/* Actions Column */}
                       <TableCell align="right" sx={{ pr: 3 }}>
                         {isOwner ? (
-                          <Tooltip title="The group owner cannot be removed">
+                          <Tooltip title="The group owner cannot leave the group">
                             <span>
                               <Button 
                                 size="small" 
@@ -281,7 +279,7 @@ export const MembersPage = () => {
                               }
                             }}
                           >
-                            Remove
+                            Leave Member
                           </Button>
                         )}
                       </TableCell>
@@ -302,7 +300,7 @@ export const MembersPage = () => {
         onSuccess={fetchData} 
       />
 
-      {/* Remove Member Dialog */}
+      {/* Leave Member Dialog */}
       <Dialog
         open={removeOpen}
         onClose={() => !removeLoading && setRemoveOpen(false)}
@@ -319,10 +317,10 @@ export const MembersPage = () => {
           }
         }}
       >
-        <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>Remove Member</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>Leave Member</DialogTitle>
         <DialogContent sx={{ py: 1 }}>
           <Typography variant="body1">
-            Are you sure you want to remove <strong>{removingMember?.user?.name}</strong> from this group?
+            Are you sure you want to make <strong>{removingMember?.user?.name}</strong> leave this group?
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
             They will no longer be an active member, but their historical group membership records will be preserved.
@@ -343,7 +341,7 @@ export const MembersPage = () => {
             color="error"
             disabled={removeLoading}
           >
-            {removeLoading ? 'Removing...' : 'Remove Member'}
+            {removeLoading ? 'Leaving...' : 'Leave Member'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -368,7 +366,7 @@ export const MembersPage = () => {
         <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>Membership History</DialogTitle>
         <DialogContent sx={{ py: 1 }}>
           <Box sx={{ mt: 1 }}>
-            <MembershipHistory groupId={groupId} />
+            {historyOpen && <MembershipHistory groupId={groupId} />}
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>

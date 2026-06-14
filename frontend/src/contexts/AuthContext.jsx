@@ -83,6 +83,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfileContext = async (name, email, password) => {
+    try {
+      const data = await authService.updateProfile(name, email, password);
+      if (data && data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setUser(data.user);
+      }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value = {
     user,
     token,
@@ -90,6 +103,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateProfileContext,
     // Maintain old aliases for UI pages backward compatibility
     loginUser: login,
     registerUser: register,

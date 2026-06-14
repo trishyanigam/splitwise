@@ -37,9 +37,27 @@ export const getMe = async () => {
   return response.data;
 };
 
+/**
+ * Retrieves all registered users (id, name, email) for member search.
+ */
+export const getUsers = async () => {
+  const response = await api.get('/auth/users');
+  return response.data; // { success, users[] }
+};
+
+/**
+ * Updates the current user profile (name, email, optional password)
+ */
+export const updateProfile = async (name, email, password) => {
+  const response = await api.put('/auth/me', { name, email, password });
+  return response.data;
+};
+
 export default {
   register,
   login,
   logout,
   getMe,
+  getUsers,
+  updateProfile,
 };

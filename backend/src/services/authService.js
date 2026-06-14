@@ -102,8 +102,75 @@ const getUserById = async (id) => {
   return user;
 };
 
+/**
+ * Retrieves all registered users (safe fields only — no password hashes).
+ * Used by the Add Member dialog to populate the user search dropdown.
+ *
+ * @returns {Array<{ id, name, email, createdAt }>}
+ */
+const getAllUsers = async () => {
+  return prisma.user.findMany({
+    select: {
+      id:        true,
+      name:      true,
+      email:     true,
+      createdAt: true,
+    },
+    orderBy: { name: 'asc' },
+  });
+};
+
+/**
+ * Updates a user profile
+ * @param {number} id 
+ * @param {string} name 
+ * @param {string} email 
+ * @param {string} newPassword 
+ * @returns {object} Updated User object (excluding password hash)
+ */
+const updateUserProfile = async (id, name, email, newPassword) => {
+  const parsedId = parseInt(id, 10);
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Check if email already exists for another user
+  const emailUser = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  });
+
+  if (emailUser && emailUser.id !== parsedId) {
+    const error = new Error('Email is already in use by another account');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const updateData = {
+    name: name.trim(),
+    email: normalizedEmail,
+  };
+
+  if (newPassword && newPassword.trim() !== '') {
+    const salt = await bcrypt.genSalt(10);
+    updateData.passwordHash = await bcrypt.hash(newPassword, salt);
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: parsedId },
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+    },
+  });
+
+  return updatedUser;
+};
+
 module.exports = {
   registerUser,
   authenticateUser,
   getUserById,
+  getAllUsers,
+  updateUserProfile,
 };

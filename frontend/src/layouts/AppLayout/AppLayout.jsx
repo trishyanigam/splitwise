@@ -24,6 +24,8 @@ import GroupIcon from '@mui/icons-material/Group';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import LogoutIcon from '@mui/icons-material/Logout';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
+import PersonIcon from '@mui/icons-material/Person';
 import useAuth from '../../hooks/useAuth.js';
 
 /**
@@ -56,7 +58,7 @@ export const AppLayout = () => {
   const handleLogout = async () => {
     handleMenuClose();
     await logout();
-    navigate('/login');
+    navigate('/');
   };
 
   const drawerWidth = 260;
@@ -67,6 +69,7 @@ export const AppLayout = () => {
     { text: 'Groups', path: '/groups', icon: <GroupIcon color="primary" /> },
     { text: 'Balances', path: '/balances', icon: <AccountBalanceWalletIcon color="primary" /> },
     { text: 'Import CSV', path: '/import', icon: <UploadFileIcon color="primary" /> },
+    { text: 'System Summary', path: '/reports/system-summary', icon: <AssessmentOutlinedIcon color="primary" /> },
   ];
 
   const drawerContent = (
@@ -87,7 +90,7 @@ export const AppLayout = () => {
           <Typography variant="body1" sx={{ fontWeight: 800, color: '#0f172a' }}>$</Typography>
         </Box>
         <Typography variant="h6" sx={{ fontWeight: 800, color: '#f9fafb', letterSpacing: '-0.02em' }}>
-          Splitwise
+          EquiShare
         </Typography>
       </Toolbar>
       <Divider />
@@ -117,10 +120,8 @@ export const AppLayout = () => {
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText 
-                  primary={item.text} 
-                  secondary={item.disabled ? 'Coming Soon' : null}
-                  primaryTypographyProps={{ sx: { fontWeight: 600 } }} 
-                  secondaryTypographyProps={{ sx: { fontSize: '10px' } }}
+                  primary={<Typography sx={{ fontWeight: 600 }}>{item.text}</Typography>} 
+                  secondary={item.disabled ? <Typography sx={{ fontSize: '10px' }}>Coming Soon</Typography> : null}
                 />
               </ListItemButton>
             </ListItem>
@@ -185,6 +186,17 @@ export const AppLayout = () => {
           }
         }}
       >
+        <MenuItem 
+          onClick={() => {
+            handleMenuClose();
+            navigate('/profile');
+          }} 
+          sx={{ fontWeight: 600, gap: 1.5 }}
+        >
+          <PersonIcon fontSize="small" />
+          My Profile
+        </MenuItem>
+        <Divider sx={{ my: 0.5, borderColor: 'rgba(255, 255, 255, 0.05)' }} />
         <MenuItem onClick={handleLogout} sx={{ color: '#ef4444', fontWeight: 600, gap: 1.5 }}>
           <LogoutIcon fontSize="small" />
           Sign Out

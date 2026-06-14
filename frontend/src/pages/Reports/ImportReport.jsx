@@ -16,9 +16,9 @@ import {
 import Grid from '@mui/material/Grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
-import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutlined';
 import BugReportOutlinedIcon from '@mui/icons-material/BugReportOutlined';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';

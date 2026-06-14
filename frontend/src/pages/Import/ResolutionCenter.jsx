@@ -29,20 +29,18 @@ import {
   ListItemText
 } from '@mui/material';
 import { DataGrid, GridToolbar } from '@mui/x-data-grid';
-import {
-  ArrowBack        as ArrowBackIcon,
-  Refresh          as RefreshIcon,
-  CheckCircle      as CheckCircleIcon,
-  Cancel           as CancelIcon,
-  Build            as BuildIcon,
-  WarningAmber     as WarningIcon,
-  History          as HistoryIcon,
-  SwapHoriz        as SwapHorizIcon,
-  SettingsBackupRestore as PolicyIcon,
-  InfoOutlined     as InfoIcon,
-  ErrorOutline     as ErrorIcon,
-  HelpOutline      as HelpIcon
-} from '@mui/icons-material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import BuildIcon from '@mui/icons-material/Build';
+import WarningIcon from '@mui/icons-material/WarningAmber';
+import HistoryIcon from '@mui/icons-material/History';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import PolicyIcon from '@mui/icons-material/SettingsBackupRestore';
+import InfoIcon from '@mui/icons-material/InfoOutlined';
+import ErrorIcon from '@mui/icons-material/ErrorOutlined';
+import HelpIcon from '@mui/icons-material/HelpOutlined';
 import {
   getSessionAnomalies,
   resolveAnomalyStrategy,

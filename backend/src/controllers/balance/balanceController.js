@@ -93,6 +93,7 @@ const getUserBalanceSummary = async (req, res, next) => {
     let amountOwed = 0.0;
     let amountToReceive = 0.0;
     const groupBalancesList = [];
+    const groupIds = memberships.map(m => m.groupId);
 
     // Calculate balances for each group
     for (const membership of memberships) {
@@ -127,15 +128,81 @@ const getUserBalanceSummary = async (req, res, next) => {
       }
     }
 
+    // 1. Calculate total expenses logged in these groups
+    let totalExpensesAmount = 0.0;
+    if (groupIds.length > 0) {
+      const expenseSum = await prisma.expense.aggregate({
+        where: { groupId: { in: groupIds } },
+        _sum: { convertedAmount: true, amount: true }
+      });
+      totalExpensesAmount = Number(expenseSum._sum.convertedAmount ?? expenseSum._sum.amount ?? 0);
+    }
+
+    // 2. Query recent activity (recent 5 expenses/settlements across these groups)
+    let recentActivity = [];
+    if (groupIds.length > 0) {
+      const [recentExpenses, recentSettlements] = await Promise.all([
+        prisma.expense.findMany({
+          where: { groupId: { in: groupIds } },
+          include: {
+            group: { select: { name: true } },
+            paidBy: { select: { name: true } }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 5
+        }),
+        prisma.settlement.findMany({
+          where: { groupId: { in: groupIds } },
+          include: {
+            group: { select: { name: true } },
+            payer: { select: { name: true } },
+            receiver: { select: { name: true } }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 5
+        })
+      ]);
+
+      const formattedExpenses = recentExpenses.map(e => ({
+        id: `expense-${e.id}`,
+        type: 'EXPENSE',
+        title: e.title,
+        groupName: e.group?.name || 'Group',
+        amount: Number(e.convertedAmount || e.amount || 0),
+        currency: 'INR',
+        date: e.expenseDate,
+        description: `Paid by ${e.paidBy?.name || 'Unknown'}`,
+        createdAt: e.createdAt
+      }));
+
+      const formattedSettlements = recentSettlements.map(s => ({
+        id: `settlement-${s.id}`,
+        type: 'SETTLEMENT',
+        title: `${s.payer?.name || 'Someone'} settled up with ${s.receiver?.name || 'someone'}`,
+        groupName: s.group?.name || 'Group',
+        amount: Number(s.convertedAmount || s.amount || 0),
+        currency: 'INR',
+        date: s.settlementDate,
+        description: s.notes || 'Settled',
+        createdAt: s.createdAt
+      }));
+
+      recentActivity = [...formattedExpenses, ...formattedSettlements]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+    }
+
     return res.status(200).json({
       success: true,
       summary: {
         totalGroups: memberships.length,
         amountOwed: Math.round(amountOwed * 100) / 100,
         amountToReceive: Math.round(amountToReceive * 100) / 100,
-        netBalance: Math.round((amountToReceive - amountOwed) * 100) / 100
+        netBalance: Math.round((amountToReceive - amountOwed) * 100) / 100,
+        totalExpensesAmount: Math.round(totalExpensesAmount * 100) / 100
       },
-      groupBalances: groupBalancesList
+      groupBalances: groupBalancesList,
+      recentActivity
     });
   } catch (error) {
     next(error);

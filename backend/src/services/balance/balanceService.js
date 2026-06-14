@@ -11,14 +11,18 @@ const { simplifyDebts } = require('../debt/debtSimplificationService.js');
  */
 function isMemberActiveOnDate(member, date) {
   if (!member) return false;
-  const txDate = new Date(date);
+  const txDateStart = new Date(date);
+  txDateStart.setUTCHours(0, 0, 0, 0);
+
+  const txDateEnd = new Date(date);
+  txDateEnd.setUTCHours(23, 59, 59, 999);
+
   const joinDate = new Date(member.joinedAt);
-  
-  if (joinDate > txDate) return false;
+  if (joinDate > txDateEnd) return false;
   
   if (member.leftAt) {
     const leaveDate = new Date(member.leftAt);
-    if (leaveDate < txDate) return false;
+    if (leaveDate < txDateStart) return false;
   }
   
   return true;
@@ -84,11 +88,7 @@ async function calculateGroupBalances(groupId) {
 
   // Process expenses
   for (const exp of expenses) {
-    const expenseDate = new Date(exp.expenseDate);
     const payerId = exp.paidById;
-    
-    // Check if payer is active on transaction date
-    const isPayerActive = await membershipService.isUserActiveOnDate(payerId, groupId, expenseDate);
     
     // Get converted amount (INR equivalent)
     const convertedTotal = parseFloat(exp.convertedAmount || exp.amount);
@@ -96,37 +96,18 @@ async function calculateGroupBalances(groupId) {
     // Get all participants for this expense
     const participants = participantsByExpense.get(exp.id) || [];
     
-    // Filter to only active participants on the expense date using membershipService
-    const activeParticipants = [];
-    for (const part of participants) {
-      const isActive = await membershipService.isUserActiveOnDate(part.userId, groupId, expenseDate);
-      if (isActive) {
-        activeParticipants.push(part);
-      }
+    if (participants.length === 0) {
+      continue; // No participants to share this expense
     }
 
-    if (activeParticipants.length === 0) {
-      continue; // No active participants to share this expense
-    }
+    // Add total paid to payer's credit balance
+    netBalances[payerId] = (netBalances[payerId] || 0.0) + convertedTotal;
 
-    // Add total paid to payer's credit balance (if payer was active)
-    if (isPayerActive) {
-      netBalances[payerId] = (netBalances[payerId] || 0.0) + convertedTotal;
-    }
-
-    // Subtract owed share from each active participant's balance
-    activeParticipants.forEach(part => {
-      let partShareINR = 0.0;
-      if (exp.splitType === 'EQUAL') {
-        partShareINR = convertedTotal / activeParticipants.length;
-      } else if (exp.splitType === 'EXACT') {
-        const shareAmt = parseFloat(part.shareAmount || 0);
-        const totalAmt = parseFloat(exp.amount) || 1.0;
-        partShareINR = (shareAmt / totalAmt) * convertedTotal;
-      } else if (exp.splitType === 'PERCENTAGE') {
-        const pct = parseFloat(part.sharePercentage || 0);
-        partShareINR = (pct / 100.0) * convertedTotal;
-      }
+    // Subtract owed share from each participant's balance
+    participants.forEach(part => {
+      const shareAmt = parseFloat(part.shareAmount || 0);
+      const totalAmt = parseFloat(exp.amount) || 1.0;
+      const partShareINR = (shareAmt / totalAmt) * convertedTotal;
       
       netBalances[part.userId] = (netBalances[part.userId] || 0.0) - partShareINR;
     });
@@ -134,24 +115,17 @@ async function calculateGroupBalances(groupId) {
 
   // Process settlements (applied after expense calculations)
   for (const settle of settlements) {
-    const settleDate = new Date(settle.settlementDate);
     const payerId = settle.payerId;
     const receiverId = settle.receiverId;
     
-    const isPayerActive = await membershipService.isUserActiveOnDate(payerId, groupId, settleDate);
-    const isReceiverActive = await membershipService.isUserActiveOnDate(receiverId, groupId, settleDate);
-
     // Use convertedAmount (representing the settlement amount converted to INR)
     const convertedSettle = Number(settle.convertedAmount || settle.amount || 0);
 
-    // Only apply settlement if both participants were active on that date
-    if (isPayerActive && isReceiverActive) {
-      // Payer balance increases (settles their debt)
-      netBalances[payerId] = (netBalances[payerId] || 0.0) + convertedSettle;
-      
-      // Receiver balance decreases (records received amount)
-      netBalances[receiverId] = (netBalances[receiverId] || 0.0) - convertedSettle;
-    }
+    // Payer balance increases (settles their debt)
+    netBalances[payerId] = (netBalances[payerId] || 0.0) + convertedSettle;
+    
+    // Receiver balance decreases (records received amount)
+    netBalances[receiverId] = (netBalances[receiverId] || 0.0) - convertedSettle;
   }
 
   // Step 5: Return net balances
@@ -165,6 +139,26 @@ async function calculateGroupBalances(groupId) {
       balance: Math.round(netBalances[userId] * 100) / 100
     };
   });
+
+  // Ensure total balances always sum to zero (handling minor float rounding offsets)
+  const totalSum = balancesList.reduce((sum, b) => sum + b.balance, 0);
+  if (totalSum !== 0 && balancesList.length > 0) {
+    let maxIndex = 0;
+    let maxVal = -1;
+    for (let i = 0; i < balancesList.length; i++) {
+      if (Math.abs(balancesList[i].balance) > maxVal) {
+        maxVal = Math.abs(balancesList[i].balance);
+        maxIndex = i;
+      }
+    }
+    balancesList[maxIndex].balance = Number((balancesList[maxIndex].balance - totalSum).toFixed(2));
+  }
+
+  // Add validation: sum(all balances) must equal 0.
+  const finalSum = balancesList.reduce((sum, b) => sum + b.balance, 0);
+  if (Math.abs(finalSum) > 0.01) {
+    throw new Error(`Balance validation check failed: sum of all balances is ${finalSum}, must equal 0.`);
+  }
 
   const simplifiedDebtsList = simplifyDebts(balancesList);
 

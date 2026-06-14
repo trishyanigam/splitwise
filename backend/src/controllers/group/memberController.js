@@ -60,6 +60,7 @@ const addMember = async (req, res, next) => {
       where: {
         groupId,
         userId,
+        isActive: true,
         leftAt: null
       }
     });
@@ -164,11 +165,12 @@ const removeMember = async (req, res, next) => {
       });
     }
 
-    // Update leftAt timestamp instead of deleting
+    // Update leftAt timestamp and isActive instead of deleting
     const updatedMembership = await prisma.groupMember.update({
       where: { id: activeMembership.id },
       data: {
         leftAt: new Date(),
+        isActive: false,
       },
       include: {
         user: {
@@ -244,6 +246,7 @@ const getMembers = async (req, res, next) => {
     const members = await prisma.groupMember.findMany({
       where: {
         groupId,
+        isActive: true,
         leftAt: null
       },
       include: {

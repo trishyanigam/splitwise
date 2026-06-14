@@ -113,7 +113,7 @@ export const MembershipHistory = ({ groupId, data }) => {
         </TableHead>
         <TableBody>
           {history.map((record) => {
-            const isActive = !record.leftAt;
+            const isActive = record.isActive !== undefined ? record.isActive : !record.leftAt;
             return (
               <TableRow 
                 key={record.id}

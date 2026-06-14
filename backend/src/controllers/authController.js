@@ -1,4 +1,4 @@
-const { registerUser, authenticateUser, getUserById } = require('../services/authService.js');
+const { registerUser, authenticateUser, getUserById, getAllUsers, updateUserProfile } = require('../services/authService.js');
 const { generateToken } = require('../utils/jwt.js');
 
 /**
@@ -109,9 +109,58 @@ const getMe = async (req, res, next) => {
   }
 };
 
+/**
+ * Updates the currently logged-in user profile
+ */
+const updateMe = async (req, res, next) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name and email are required fields.',
+      });
+    }
+
+    if (password && password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long.',
+      });
+    }
+
+    const updatedUser = await updateUserProfile(req.user.id, name, email, password);
+    return res.status(200).json({
+      success: true,
+      user: updatedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Returns all registered users (id, name, email) for the member search dropdown.
+ * Password hashes are never included.
+ */
+const getUsers = async (req, res, next) => {
+  try {
+    const users = await getAllUsers();
+    return res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   logout,
   getMe,
+  updateMe,
+  getUsers,
 };
