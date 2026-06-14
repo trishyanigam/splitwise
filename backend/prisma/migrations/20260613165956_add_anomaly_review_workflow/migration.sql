@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `importanomaly` ADD COLUMN `resolutionNotes` VARCHAR(500) NULL,
+ALTER TABLE `ImportAnomaly` ADD COLUMN `resolutionNotes` VARCHAR(500) NULL,
     ADD COLUMN `reviewDecision` ENUM('PENDING', 'APPROVED', 'REJECTED', 'MANUAL_FIX', 'MERGED') NOT NULL DEFAULT 'PENDING',
     ADD COLUMN `reviewedAt` DATETIME(3) NULL,
     ADD COLUMN `reviewedById` INTEGER NULL;
